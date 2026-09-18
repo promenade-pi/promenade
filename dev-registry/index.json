@@ -1,0 +1,3540 @@
+{
+  "registryVersion": 1,
+  "name": "Promenade Lab example registry",
+  "plugins": [
+    {
+      "id": "org.promenade.net-editor",
+      "name": "Petri Net Editor",
+      "description": "Draw a Petri net or an object-centric Petri net by hand and publish it as an artifact. Declare object types to turn a plain net into an OCPN: places and arcs gain a type, and arcs can be marked variable. Reads and writes PNML.",
+      "runtime": "view",
+      "authors": [
+        {
+          "name": "Promenade"
+        }
+      ],
+      "keywords": [
+        "petri net",
+        "ocpn",
+        "editor",
+        "authoring",
+        "pnml"
+      ],
+      "renders": [
+        "AcceptingPetriNet",
+        "ObjectCentricPetriNet"
+      ],
+      "consumes": [
+        "AcceptingPetriNet",
+        "ObjectCentricPetriNet"
+      ],
+      "versions": [
+        {
+          "version": "0.2.2",
+          "url": "packages/org.promenade.net-editor-0.2.2.pmplugin",
+          "sha256": "6624fb44f8f5b20c5e00debfcaf6253990518dac73baa4d1ec811fd81725f303",
+          "bytes": 145782,
+          "released": "2026-09-16",
+          "changelog": "Draw a Petri net or an OCPN by hand and publish it, or open an existing one and edit it. Declaring object types turns a plain net into an OCPN: places and arcs gain a type, arcs can be marked variable, and a silent transition must belong to exactly one type — the same rules the host validator enforces, said about the thing on the canvas. Reads and writes PNML, including OCPN Studio files, whose colour sets are adopted verbatim as object types. Editing a mined net publishes a NEW artifact whose input is the one it was edited from; node ids survive the round trip, so an edited net is still the same net to anything that correlates by id. Also: an authored net now carries its counts, so it gets a subtitle in the artifact tree like everything else, and the Publish button stays readable on hover. Needs an app with HOST_VALIDATED_TYPES (2026-09-16 or later): the two net types are core, and a package may normally publish only types it declares itself."
+        }
+      ]
+    },
+    {
+      "id": "org.promenade.org-model",
+      "name": "Organizational Model Mining",
+      "description": "Groups the people in a social network into roles, and names each one by the work its members do. Hierarchical clustering over the network's own weights, with the cut as a parameter rather than a guess.",
+      "runtime": "wasm + view",
+      "authors": [
+        {
+          "name": "Promenade Team"
+        }
+      ],
+      "citation": {
+        "text": "Song, M., van der Aalst, W.M.P. (2008). Towards Comprehensive Support for Organizational Mining. Decision Support Systems, 46(1), 300-317.",
+        "doi": "10.1016/j.dss.2008.07.002",
+        "bibtex": "@article{song2008organizational,\n  title   = {Towards Comprehensive Support for Organizational Mining},\n  author  = {Song, Minseok and van der Aalst, Wil M. P.},\n  journal = {Decision Support Systems},\n  volume  = {46}, number = {1}, pages = {300--317}, year = {2008},\n  doi     = {10.1016/j.dss.2008.07.002}\n}"
+      },
+      "homepage": "https://github.com/promenade-lab/org-model",
+      "keywords": [
+        "organizational-mining",
+        "role-discovery",
+        "clustering",
+        "resource",
+        "rust"
+      ],
+      "provides": [
+        "OrganizationalModel"
+      ],
+      "renders": [
+        "OrganizationalModel"
+      ],
+      "accepts": [
+        "SocialNetwork"
+      ],
+      "consumes": [
+        "OrganizationalModel",
+        "SocialNetwork"
+      ],
+      "actions": [
+        {
+          "id": "org.promenade.org-model.discover",
+          "label": "Organizational Model",
+          "description": "Clusters a social network into groups of people and describes each group by its members' activities. A similar-task network yields roles; a handover or working-together network yields organisational units.",
+          "inputs": [
+            "SocialNetwork"
+          ],
+          "outputs": [
+            "OrganizationalModel"
+          ],
+          "runtime": "wasm"
+        }
+      ],
+      "recommends": [
+        {
+          "id": "org.promenade.social-network",
+          "reason": "produces the SocialNetwork this clusters — its similar-task action for roles, handover or working-together for organisational units"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.1.0",
+          "url": "packages/org.promenade.org-model-0.1.0.pmplugin",
+          "sha256": "fc4a79eabd66b0474388075c672e807b3b45888208ac2afcdfdcfb550fdcb292",
+          "bytes": 139456,
+          "released": "2026-09-16",
+          "changelog": "Initial release: hierarchical role discovery over a social network, with the dendrogram and the cut drawn beside the groups."
+        }
+      ]
+    },
+    {
+      "id": "org.promenade.relation-gap",
+      "name": "OCEL Relation Gaps",
+      "description": "Simulates and reconstructs missing event-object relations in an OCEL 2.0 log. \"Simulate relation gaps\" holds out a seeded test partition and drops a fraction of each test event's objects, producing a reproducible gapped log. \"Reconstruct relation gaps\" learns pairwise object co-occurrence from what survived and ranks candidates for every hole, scoring itself against the original log with Hits@K and MRR. Ported from Áron Balázs Papp's \"Object-Centric Event Log Repair Through Graph Neural Networks\" (ELTE DS Lab 1), whose pairwise association model this implements.",
+      "runtime": "pyodide + relational + wasm + view",
+      "authors": [
+        {
+          "name": "Áron Balázs Papp",
+          "affiliation": "ELTE University Budapest, Data Science and Engineering"
+        },
+        {
+          "name": "István Koren",
+          "email": "korenistvan@inf.elte.hu",
+          "affiliation": "ELTE University Budapest, Data Science and Engineering",
+          "orcid": "0000-0003-1350-6732"
+        }
+      ],
+      "keywords": [
+        "object-centric",
+        "ocel",
+        "log-repair",
+        "data-quality",
+        "link-prediction",
+        "co-occurrence",
+        "benchmark",
+        "experimental"
+      ],
+      "provides": [
+        "ObjectCentricEventLog",
+        "RelationGapEvaluation",
+        "RelationGapGraph"
+      ],
+      "renders": [
+        "RelationGapEvaluation"
+      ],
+      "accepts": [
+        "ObjectCentricEventLog"
+      ],
+      "consumes": [
+        "RelationGapEvaluation",
+        "ObjectCentricEventLog"
+      ],
+      "actions": [
+        {
+          "id": "org.promenade.relation-gap.simulate",
+          "label": "Simulate relation gaps",
+          "description": "Derives a gapped copy of an object-centric event log: a seeded share of the events becomes the test partition, and within each test event a fraction of the participating objects is removed. Every event keeps at least one object and every test event loses at least one, so the result is always a usable log with a known, recoverable set of holes. The same log, fraction and seed always produce the same gapped log.",
+          "inputs": [
+            "ObjectCentricEventLog"
+          ],
+          "outputs": [
+            "ObjectCentricEventLog"
+          ],
+          "runtime": "relational"
+        },
+        {
+          "id": "org.promenade.relation-gap.reconstruct",
+          "label": "Reconstruct relation gaps",
+          "description": "Ranks candidate objects for every missing event-object relation, using pairwise co-occurrence probabilities estimated only from the relations the gapped log still has. Scores itself against the reference log with Hits@K, MRR and a per-object-type breakdown, and keeps a bounded walkthrough of individual predictions.",
+          "inputs": [
+            "ObjectCentricEventLog",
+            "ObjectCentricEventLog"
+          ],
+          "outputs": [
+            "RelationGapEvaluation"
+          ],
+          "runtime": "pyodide"
+        },
+        {
+          "id": "org.promenade.relation-gap.graph",
+          "label": "Build the relation gap learning graph",
+          "description": "Turns a gapped log and its reference into the integer-indexed heterogeneous graph the GraphSAGE kernel trains on: event and object nodes, the has / in / related relations between them, and the held-out links used only for scoring. An internal stage of \"Reconstruct relation gaps (GNN)\"; the network itself runs in WebAssembly and cannot reach the database, which is why the graph is assembled here.",
+          "inputs": [
+            "ObjectCentricEventLog",
+            "ObjectCentricEventLog"
+          ],
+          "outputs": [
+            "RelationGapGraph"
+          ],
+          "runtime": "pyodide",
+          "internal": true
+        },
+        {
+          "id": "org.promenade.relation-gap.reconstruct-gnn",
+          "label": "Reconstruct relation gaps (GNN)",
+          "description": "Trains a three-layer heterogeneous GraphSAGE network on the gapped log and ranks every object as a candidate for every hole. Message passing runs over the has / in / related channels of §4.2; the objective is the triplet margin of §5.3, with negatives drawn from the same object type as the positive. Training happens in the browser, in WebAssembly, and takes minutes rather than seconds.",
+          "inputs": [
+            "ObjectCentricEventLog",
+            "ObjectCentricEventLog"
+          ],
+          "outputs": [
+            "RelationGapEvaluation"
+          ],
+          "runtime": "wasm"
+        }
+      ],
+      "experimental": true,
+      "versions": [
+        {
+          "version": "0.3.0",
+          "url": "packages/org.promenade.relation-gap-0.3.0.pmplugin",
+          "sha256": "e5b2d9a923ccba72da6048d615ccf6a6831199515840a0975738eb87b1f73b3b",
+          "bytes": 115808,
+          "changelog": "Tracks the refactored reference implementation: the GraphSAGE arm now trains on masked queries, hiding each batch's own positive links from the message-passing graph. Without that the network read the answer off the adjacency it was handed — this reverses 0.2.0's result."
+        }
+      ]
+    },
+    {
+      "id": "org.promenade.resource-behavior",
+      "name": "Resource Behavior",
+      "description": "How each person in a log actually works: how much they do, how fast, how specialised, how often they batch or juggle several things at once, and whether they slow down when busy.",
+      "runtime": "wasm + view",
+      "authors": [
+        {
+          "name": "Promenade Team"
+        }
+      ],
+      "citation": {
+        "text": "Pika, A., Leyer, M., Wynn, M.T., Fidge, C.J., ter Hofstede, A.H.M., van der Aalst, W.M.P. (2017). Mining Resource Profiles from Event Logs. ACM Transactions on Management Information Systems, 8(1), 1-30.",
+        "doi": "10.1145/3041218",
+        "bibtex": "@article{pika2017profiles,\n  title   = {Mining Resource Profiles from Event Logs},\n  author  = {Pika, Anastasiia and Leyer, Michael and Wynn, Moe T. and Fidge, Colin J. and ter Hofstede, Arthur H. M. and van der Aalst, Wil M. P.},\n  journal = {ACM Transactions on Management Information Systems},\n  volume  = {8}, number = {1}, pages = {1--30}, year = {2017},\n  doi     = {10.1145/3041218}\n}"
+      },
+      "homepage": "https://github.com/promenade-lab/resource-behavior",
+      "keywords": [
+        "organizational-mining",
+        "resource",
+        "workload",
+        "utilisation",
+        "multitasking",
+        "rust"
+      ],
+      "provides": [
+        "ResourceProfiles"
+      ],
+      "renders": [
+        "ResourceProfiles"
+      ],
+      "accepts": [
+        "TraditionalEventLog"
+      ],
+      "consumes": [
+        "ResourceProfiles",
+        "TraditionalEventLog"
+      ],
+      "actions": [
+        {
+          "id": "org.promenade.resource-behavior.profile",
+          "label": "Resource Behavior",
+          "description": "Profiles every person in the log: volume, spread of work, collaboration, batching, and — where the log records start and complete separately — service time, waiting time, utilisation, multitasking, and the correlation between how busy someone was and how long their work then took.",
+          "inputs": [
+            "TraditionalEventLog"
+          ],
+          "outputs": [
+            "ResourceProfiles"
+          ],
+          "runtime": "wasm"
+        }
+      ],
+      "recommends": [
+        {
+          "id": "org.promenade.social-network",
+          "reason": "the other half of the organisational perspective — who works with whom, rather than how each person works"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.1.0",
+          "url": "packages/org.promenade.resource-behavior-0.1.0.pmplugin",
+          "sha256": "ce628d496d861876f0c117f00814d914b9aa98fc96509f45b7c9305c81499c2d",
+          "bytes": 217570,
+          "released": "2026-09-16",
+          "changelog": "Initial release: per-person volume, spread, batching and collaboration always; service time, utilisation, multitasking and workload-dependent speed wherever the log records start and complete separately."
+        }
+      ]
+    },
+    {
+      "id": "org.promenade.social-network",
+      "name": "Social Network Mining",
+      "description": "Derives the organisation from the log: who hands work to whom, who subcontracts, who works together, who does the same kind of work. One weighted network over resources, five ways of measuring the relation.",
+      "runtime": "wasm + view",
+      "authors": [
+        {
+          "name": "Promenade Team"
+        }
+      ],
+      "citation": {
+        "text": "van der Aalst, W.M.P., Reijers, H.A., Song, M. (2005). Discovering Social Networks from Event Logs. Computer Supported Cooperative Work, 14(6), 549-593.",
+        "doi": "10.1007/s10606-005-9005-9",
+        "bibtex": "@article{vanderaalst2005social,\n  title   = {Discovering Social Networks from Event Logs},\n  author  = {van der Aalst, Wil M. P. and Reijers, Hajo A. and Song, Minseok},\n  journal = {Computer Supported Cooperative Work},\n  volume  = {14}, number = {6}, pages = {549--593}, year = {2005},\n  doi     = {10.1007/s10606-005-9005-9}\n}"
+      },
+      "homepage": "https://github.com/promenade-lab/social-network",
+      "keywords": [
+        "organizational-mining",
+        "social-network",
+        "handover-of-work",
+        "resource",
+        "rust"
+      ],
+      "provides": [
+        "SocialNetwork"
+      ],
+      "renders": [
+        "SocialNetwork"
+      ],
+      "accepts": [
+        "TraditionalEventLog"
+      ],
+      "consumes": [
+        "SocialNetwork",
+        "TraditionalEventLog"
+      ],
+      "actions": [
+        {
+          "id": "org.promenade.social-network.discover",
+          "label": "Social Network",
+          "description": "Builds a weighted network over the log's resources from how work moves between them inside a case — handover, subcontracting, working together, or reassignment.",
+          "inputs": [
+            "TraditionalEventLog"
+          ],
+          "outputs": [
+            "SocialNetwork"
+          ],
+          "runtime": "wasm"
+        },
+        {
+          "id": "org.promenade.social-network.similar-task",
+          "label": "Social Network (similar task)",
+          "description": "Builds a weighted network over the log's resources from how alike their work is — each person's activity profile compared with every other's. Two people who never share a case can still be strongly related.",
+          "inputs": [
+            "TraditionalEventLog"
+          ],
+          "outputs": [
+            "SocialNetwork"
+          ],
+          "runtime": "wasm"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.2.0",
+          "url": "packages/org.promenade.social-network-0.2.0.pmplugin",
+          "sha256": "a14b8d8347c22c954bf4efba50b498b60d2007aac3f0d41fc3f136b815c387ee",
+          "bytes": 215197,
+          "released": "2026-09-16",
+          "changelog": "Carries each person's activity mix, so a consumer can name a group of them — the Organizational Model plugin labels its roles from it."
+        }
+      ]
+    },
+    {
+      "id": "org.promenade.variant-metro",
+      "name": "Object-Centric Variant Metro",
+      "description": "An experimental metro map whose slider is the number of process variants, not the number of arcs. Process executions are extracted and grouped into variants exactly as the \"Cases & Variants (OCEL)\" plugin does (Adams et al., arXiv:2208.03235), every variant contributes its own object-centric directly-follows graph, and the map is laid out once over all of them. At the top of the slider you see the OC-DFG of the whole log; at the bottom, the single most frequent variant alone — and every position in between is the OC-DFG of exactly the k most frequent variants, on a layout that never moves.",
+      "runtime": "pyodide + wasm + view",
+      "authors": [
+        {
+          "name": "Promenade Lab example"
+        }
+      ],
+      "citation": {
+        "text": "J. N. Adams, D. Schuster, S. Schmitz, G. Schuh, W. M. P. van der Aalst, \"Defining Cases and Variants for Object-Centric Event Data,\" arXiv:2208.03235, 2022.",
+        "url": "https://arxiv.org/abs/2208.03235"
+      },
+      "keywords": [
+        "object-centric",
+        "variants",
+        "process-executions",
+        "dfg",
+        "metro-map",
+        "schematic",
+        "experimental",
+        "rust",
+        "python",
+        "view"
+      ],
+      "provides": [
+        "OCVariantMetro",
+        "OCVariantDFG"
+      ],
+      "renders": [
+        "OCVariantMetro"
+      ],
+      "accepts": [
+        "ObjectCentricEventLog"
+      ],
+      "consumes": [
+        "OCVariantMetro",
+        "ObjectCentricEventLog"
+      ],
+      "actions": [
+        {
+          "id": "org.promenade.variant-metro.variants",
+          "label": "Extract variants for the variant metro",
+          "description": "Extracts process executions, groups them into variants by activity-labelled graph isomorphism, and folds every variant back into one object-centric directly-follows graph in which each node and arc records the most frequent variant it first appears in. The internal first stage of \"Discover variant metro\".",
+          "inputs": [
+            "ObjectCentricEventLog"
+          ],
+          "outputs": [
+            "OCVariantDFG"
+          ],
+          "runtime": "pyodide",
+          "internal": true
+        },
+        {
+          "id": "org.promenade.variant-metro.discover",
+          "label": "Discover metro map with variant slider",
+          "description": "Lays the variant-attributed OC-DFG out as a metro map — the same layout the Metro Map plugin's OC-DFG basis uses, reused as a library, over the whole log at once so that filtering by variant never moves a station.",
+          "inputs": [
+            "ObjectCentricEventLog"
+          ],
+          "outputs": [
+            "OCVariantMetro"
+          ],
+          "runtime": "wasm"
+        }
+      ],
+      "experimental": true,
+      "versions": [
+        {
+          "version": "0.1.0",
+          "url": "packages/org.promenade.variant-metro-0.1.0.pmplugin",
+          "sha256": "78aca8bb41b54b20e88d172f10ed5046deba07e5f529d363023d273e826840de",
+          "bytes": 274483,
+          "released": "2026-09-07",
+          "changelog": "First release: a metro map whose slider is the number of process variants — top of the slider the whole log, bottom the single most frequent variant."
+        },
+        {
+          "version": "0.1.1",
+          "url": "packages/org.promenade.variant-metro-0.1.1.pmplugin",
+          "sha256": "a2e15b83d7befb3483eb08b70f325960cf9512f4852712f1baa979487b217428",
+          "bytes": 274607,
+          "released": "2026-09-16",
+          "changelog": "Renamed to \"Metro map with variant slider\" — the old name described the technique rather than the result, and sorted away from the metro maps it is a variation of."
+        },
+        {
+          "version": "0.2.0",
+          "url": "packages/org.promenade.variant-metro-0.2.0.pmplugin",
+          "sha256": "fd6e810868562cb2a3eb5e38d31ea2157d3a5bf8fa3a18e3b03ee3d2fb3a69c8",
+          "bytes": 278231,
+          "released": "2026-09-17",
+          "changelog": "The wait before the map appears is no longer a blank screen. The view opts into the host's run-bound live preview, so its panel opens the moment discovery starts (which here includes starting Python for the variant-extraction stage) and shows an animated Budapest metro schematic plus the run's own progress; the top-bar indicator gains a Cancel button. The same screen covers the view's own first layout pass. Also fixes a latent race in receiving saved view settings: host handlers now register before the handshake, not from a React effect."
+        },
+        {
+          "version": "0.3.0",
+          "url": "packages/org.promenade.variant-metro-0.3.0.pmplugin",
+          "sha256": "6589f215dfe07e40ab6c24a4a14e95b35c2757a546d0f3ee41905eced6d6945a",
+          "bytes": 282497,
+          "released": "2026-09-18",
+          "changelog": "Drops this plugin's own copy of the metro layout for the shared `metro-layout` package, which is a substantial upgrade rather than a refactor: the copy had fallen behind and was missing the drawing-refinement pass entirely, gateway-aware routing, and per-corner chamfer limits. Arcs are now detoured around the node footprints and stop captions they used to be drawn through, explicit branches meet at their gateway marker, and one tight bend no longer flattens corners elsewhere. On the Logistics OC-DFG graph refinement alone roughly halves the cross-type overlaps in the drawn geometry. Start markers also stop stacking on the top row when layout stability is off."
+        },
+        {
+          "version": "0.3.1",
+          "url": "packages/org.promenade.variant-metro-0.3.1.pmplugin",
+          "sha256": "c530c01f14c0db5fd4e6c4a2bc790cfa927b2b852757d504f57803b1c5adc24c",
+          "bytes": 282741,
+          "released": "2026-09-18",
+          "changelog": "Rebuilt against the shared metro-layout gateway fixes: incoming join branches retain distinct vertical arrival tracks and stop above the diamond; join diamonds are centered on the incoming-track span; and the outgoing branch starts from that adjusted center."
+        },
+        {
+          "version": "0.3.2",
+          "url": "packages/org.promenade.variant-metro-0.3.2.pmplugin",
+          "sha256": "fe3bbcb7958ca7403349e0e5776a5d8569154b086ab81012e8bd8cdf34ab16bd",
+          "bytes": 282883,
+          "released": "2026-09-18",
+          "changelog": "A centered join's single outgoing branch now stays on the diamond's final centerline for its whole initial vertical run, removing the S-shaped hook caused by briefly reconnecting to the old pre-centering lane."
+        },
+        {
+          "version": "0.3.3",
+          "url": "packages/org.promenade.variant-metro-0.3.3.pmplugin",
+          "sha256": "671b524d474bcaa9fdf5cd4fcd1f4814a4c81749756bb0436b45f42b965e8d68",
+          "bytes": 283168,
+          "released": "2026-09-18",
+          "changelog": "Sink markers now center under the edges that actually target them after final track allocation. Alignment uses graph endpoint identity rather than coincident column/rank geometry and retains marker, caption, and unrelated-route clearance."
+        },
+        {
+          "version": "0.3.4",
+          "url": "packages/org.promenade.variant-metro-0.3.4.pmplugin",
+          "sha256": "b0ad2e9d0627ee2281e026cc68b08e552680df89ba8cbddc6b08d41e10e834c5",
+          "bytes": 283613
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.alignment",
+      "name": "Conformance Checking",
+      "description": "Replays a log against a Petri net two ways: alignments (the cheapest explanation of every trace variant, with fitness and escaping-edges precision) and token-based replay (a linear walk that attributes missing and remaining tokens to individual places).",
+      "runtime": "wasm + view",
+      "authors": [
+        {
+          "name": "Promenade Team"
+        }
+      ],
+      "citation": {
+        "text": "van der Aalst, W.M.P., Adriansyah, A., van Dongen, B.F. (2012). Replaying History on Process Models for Conformance Checking and Performance Analysis. WIREs Data Mining and Knowledge Discovery, 2(2), 182-192.",
+        "doi": "10.1002/widm.1045",
+        "bibtex": "@article{vanderaalst2012replaying,\n  title   = {Replaying History on Process Models for Conformance Checking and Performance Analysis},\n  author  = {van der Aalst, Wil M. P. and Adriansyah, Arya and van Dongen, Boudewijn F.},\n  journal = {WIREs Data Mining and Knowledge Discovery},\n  volume  = {2}, number = {2}, pages = {182--192}, year = {2012},\n  doi     = {10.1002/widm.1045}\n}"
+      },
+      "homepage": "https://github.com/promenade-lab/alignment",
+      "keywords": [
+        "conformance",
+        "alignment",
+        "token-replay",
+        "fitness",
+        "petri-net",
+        "rust"
+      ],
+      "provides": [
+        "AlignmentSet",
+        "ReplayDiagnostics"
+      ],
+      "accepts": [
+        "TraditionalEventLog",
+        "AcceptingPetriNet"
+      ],
+      "consumes": [
+        "AlignmentSet",
+        "ReplayDiagnostics",
+        "TraditionalEventLog",
+        "AcceptingPetriNet"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.alignment.check",
+          "label": "Conformance checking (alignments)",
+          "description": "For every distinct trace variant, the cheapest alignment of sync, log and model moves against the net, plus the fitness and precision derived from it.",
+          "inputs": [
+            "TraditionalEventLog",
+            "AcceptingPetriNet"
+          ],
+          "outputs": [
+            "AlignmentSet"
+          ],
+          "runtime": "wasm"
+        },
+        {
+          "id": "run.promenade.alignment.token-replay",
+          "label": "Conformance checking (token replay)",
+          "description": "Fires every trace through the net, inventing a token wherever a transition is not enabled and counting what is left over at the end. Reports token-based fitness and, per place, where the log and the model disagreed.",
+          "inputs": [
+            "TraditionalEventLog",
+            "AcceptingPetriNet"
+          ],
+          "outputs": [
+            "ReplayDiagnostics"
+          ],
+          "runtime": "wasm"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.2.1",
+          "url": "packages/run.promenade.alignment-0.2.1.pmplugin",
+          "sha256": "e8eda77e953ecead2372a2714d6526aeb4f205b29ed9a7eff47847ee488d7e38",
+          "bytes": 57024,
+          "released": "2026-08-16",
+          "changelog": "Ships a Changelog tab in the plugin's own detail panel — no algorithm change."
+        },
+        {
+          "version": "0.3.0",
+          "url": "packages/run.promenade.alignment-0.3.0.pmplugin",
+          "sha256": "5a00674e92e48ddcbdd55a1c34dc3c5795fa8d9e03efda61bca15aa60a775fc7",
+          "bytes": 75009,
+          "released": "2026-09-14",
+          "changelog": "Adds token-based replay as a second action, with per-place missing/remaining token diagnostics and a view that draws them on the net."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.alpha-miner",
+      "name": "Alpha Miner (Classic)",
+      "description": "van der Aalst's original 2004 discovery algorithm — the textbook starting point for process discovery, kept here mainly for teaching its own well-known limitations (no noise tolerance, no short loops, no duplicate labels). Heuristics Miner or Inductive Miner is the better default on a real, noisy log.",
+      "runtime": "wasm + view",
+      "authors": [
+        {
+          "name": "Promenade Team"
+        }
+      ],
+      "citation": {
+        "text": "van der Aalst, W.M.P., Weijters, T., Maruster, L. (2004). Workflow Mining: Discovering Process Models from Event Logs. IEEE TKDE 16(9), 1128-1142.",
+        "doi": "10.1109/TKDE.2004.47",
+        "bibtex": "@article{vanderaalst2004workflow,\n  title   = {Workflow Mining: Discovering Process Models from Event Logs},\n  author  = {van der Aalst, Wil M. P. and Weijters, Ton and Maruster, Laura},\n  journal = {IEEE Transactions on Knowledge and Data Engineering},\n  volume  = {16}, number = {9}, pages = {1128--1142}, year = {2004},\n  doi     = {10.1109/TKDE.2004.47}\n}"
+      },
+      "homepage": "https://github.com/promenade-lab/alpha-miner",
+      "keywords": [
+        "discovery",
+        "petri-net",
+        "alpha-miner",
+        "rust"
+      ],
+      "provides": [
+        "AcceptingPetriNet"
+      ],
+      "accepts": [
+        "TraditionalEventLog"
+      ],
+      "consumes": [
+        "AcceptingPetriNet",
+        "TraditionalEventLog"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.alpha-miner.discover",
+          "label": "Alpha Miner (Classic)",
+          "inputs": [
+            "TraditionalEventLog"
+          ],
+          "outputs": [
+            "AcceptingPetriNet"
+          ],
+          "runtime": "wasm"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.2.2",
+          "url": "packages/run.promenade.alpha-miner-0.2.2.pmplugin",
+          "sha256": "65cb1abb199de6392057b8a5a7fe63e70324d08a4d36a5367027c2561ea0e6f7",
+          "bytes": 44450,
+          "released": "2026-08-16",
+          "changelog": "Ships a Changelog tab in the plugin's own detail panel — no algorithm change."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.bpmn",
+      "name": "BPMN 2.0",
+      "description": "BPMN 2.0 support: convert a process tree or a Petri net to a BPMN diagram, convert a BPMN diagram back to a Petri net or process tree, import a BPMN 2.0 XML file, and a React Flow view with BPMN 2.0 XML export. Pure control-flow BPMN only (tasks, start/end events, exclusive/parallel/inclusive gateways, sequence flows) — no pools, lanes, message flows, sub-processes, or boundary events.",
+      "runtime": "wasm + view",
+      "authors": [
+        {
+          "name": "Promenade Team"
+        }
+      ],
+      "citation": {
+        "text": "Favre, C. and Völzer, H. (2012). The Difficulty of Replacing an Inclusive OR-Join. BPM 2012, LNCS 7481, 156-171 — the basis of the \"Replace OR-joins\" action. The BPMN 2.0 notation itself is OMG's; the Petri net and process tree conversions are the standard structural ones.",
+        "doi": "10.1007/978-3-642-32885-5_12",
+        "bibtex": "@inproceedings{favre2012difficulty,\n  title     = {The Difficulty of Replacing an Inclusive OR-Join},\n  author    = {Favre, C{\\'e}dric and V{\\\"o}lzer, Hagen},\n  booktitle = {Business Process Management (BPM 2012)},\n  series    = {LNCS}, volume = {7481}, pages = {156--171}, year = {2012},\n  doi       = {10.1007/978-3-642-32885-5_12}\n}"
+      },
+      "keywords": [
+        "bpmn",
+        "process-tree",
+        "petri-net",
+        "conversion",
+        "rust",
+        "react-flow",
+        "elkjs"
+      ],
+      "provides": [
+        "Bpmn",
+        "AcceptingPetriNet",
+        "ProcessTree"
+      ],
+      "renders": [
+        "Bpmn"
+      ],
+      "accepts": [
+        "ProcessTree",
+        "AcceptingPetriNet",
+        "Bpmn"
+      ],
+      "consumes": [
+        "Bpmn",
+        "ProcessTree",
+        "AcceptingPetriNet"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.bpmn.from-process-tree",
+          "label": "Process Tree → BPMN",
+          "description": "Direct recursive translation of a process tree into a BPMN diagram — block-structured by construction, since a process tree already is. Rejects nodes using the 'interleaving' or 'partialorder' operators, which have no BPMN equivalent.",
+          "inputs": [
+            "ProcessTree"
+          ],
+          "outputs": [
+            "Bpmn"
+          ],
+          "runtime": "wasm"
+        },
+        {
+          "id": "run.promenade.bpmn.from-petrinet",
+          "label": "Petri Net → BPMN",
+          "description": "Converts an Accepting Petri Net to a BPMN diagram. Clean and block-structured for a sound, free-choice workflow net; still converts (behavior-preserving) otherwise, flagging the result as not block-structured.",
+          "inputs": [
+            "AcceptingPetriNet"
+          ],
+          "outputs": [
+            "Bpmn"
+          ],
+          "runtime": "wasm"
+        },
+        {
+          "id": "run.promenade.bpmn.import",
+          "label": "Import BPMN 2.0 XML…",
+          "description": "Imports a BPMN 2.0 XML file as a Bpmn diagram artifact. A construct outside this plugin's control-flow subset (pools, message flows, sub-processes, boundary/intermediate events) is represented as an opaque pass-through task, with a warning naming each one -- never silently dropped.",
+          "inputs": [],
+          "outputs": [
+            "Bpmn"
+          ],
+          "runtime": "wasm"
+        },
+        {
+          "id": "run.promenade.bpmn.export-xml",
+          "label": "BPMN 2.0 XML",
+          "description": "Exports a BPMN diagram as plain BPMN 2.0 XML (no diagram-interchange layout -- open the diagram's own view for an export that includes the drawn positions). Still fully spec-valid; most tools apply their own auto-layout on import.",
+          "inputs": [
+            "Bpmn"
+          ],
+          "outputs": [],
+          "runtime": "wasm"
+        },
+        {
+          "id": "run.promenade.bpmn.replace-or-joins",
+          "label": "Replace OR-joins",
+          "description": "Rewrites every inclusive (OR) join that can be proven equivalent to a combination of exclusive and parallel gateways, following Favre and Völzer's local replacement: the join's incoming flows are grouped so that each group is internally mutually exclusive and the groups are always concurrent, giving one exclusive join per group under one parallel join. An inclusive join whose flows cannot be grouped that way has no local replacement at all — it is left in place and said so, never guessed at. Needed before \"BPMN → Petri net\", which has no translation for an inclusive gateway.",
+          "inputs": [
+            "Bpmn"
+          ],
+          "outputs": [
+            "Bpmn"
+          ],
+          "runtime": "wasm"
+        },
+        {
+          "id": "run.promenade.bpmn.to-petrinet",
+          "label": "BPMN → Petri Net",
+          "description": "Converts a BPMN diagram to an Accepting Petri Net. A block-structured diagram gets the compact synthesis: one alternating place/transition pattern per XOR/AND block. Anything else — which is most discovered models — gets the direct mapping instead (a place per sequence flow, a transition per task, one transition per branch of an exclusive gateway), so a model that does not nest still converts. Inclusive (OR) gateways have no translation either way: run \"Replace OR-joins\" first.",
+          "inputs": [
+            "Bpmn"
+          ],
+          "outputs": [
+            "AcceptingPetriNet"
+          ],
+          "runtime": "wasm"
+        },
+        {
+          "id": "run.promenade.bpmn.to-process-tree",
+          "label": "BPMN → Process Tree",
+          "description": "Converts a BPMN diagram to a Process Tree via block-structure decomposition. Solid only when the diagram is block-structured (single start/end event, every gateway pair matched, every loop the canonical do-redo shape). Rejects with a diagnostic naming the unreducible region rather than approximating.",
+          "inputs": [
+            "Bpmn"
+          ],
+          "outputs": [
+            "ProcessTree"
+          ],
+          "runtime": "wasm"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.5.0",
+          "url": "packages/run.promenade.bpmn-0.5.0.pmplugin",
+          "sha256": "32499c0e55cf1d397fcbf08b6992afe576b786dd35034b064069dddcdb2b035d",
+          "bytes": 688302,
+          "changelog": "BPMN 2.0 support: converts a process tree or a Petri net to a BPMN diagram and back, imports BPMN 2.0 XML, and ships a React Flow view with XML export. Pure control flow only — no pools, lanes, message flows, sub-processes or boundary events."
+        },
+        {
+          "version": "0.5.1",
+          "url": "packages/run.promenade.bpmn-0.5.1.pmplugin",
+          "sha256": "b90d18bfd2d619c7e27dc26abb605b0ab0181e0306315746ab7b9a1448ecd334",
+          "bytes": 688768
+        },
+        {
+          "version": "0.6.0",
+          "url": "packages/run.promenade.bpmn-0.6.0.pmplugin",
+          "sha256": "784730d1d2ee140a8dfc420311ac79e71856960414b5256854c194fae67d4608",
+          "bytes": 719315
+        },
+        {
+          "version": "0.6.1",
+          "url": "packages/run.promenade.bpmn-0.6.1.pmplugin",
+          "sha256": "09edcdb718832713cad45f47d4f730bb7e03feb4e50d7fd93f62cba5f541a0b1",
+          "bytes": 719909
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.cardinality-impact-explorer",
+      "name": "Cardinality Impact Explorer",
+      "description": "An interactive what-if workspace for object-centric event logs. Choose a primary object, a related object and a downstream target object, then test a 1:n relationship against observed event-level cardinality and target-lifecycle evidence. It surfaces estimated effects on process variants, lead time and rework risk, plus affected target activities and optional operational breakdowns.",
+      "runtime": "pyodide + view",
+      "authors": [
+        {
+          "name": "István Koren",
+          "email": "korenistvan@inf.elte.hu",
+          "affiliation": "ELTE University Budapest, Data Science and Engineering",
+          "orcid": "0000-0003-1350-6732"
+        }
+      ],
+      "keywords": [
+        "object-centric",
+        "ocel",
+        "cardinality",
+        "scenario",
+        "impact",
+        "variants",
+        "performance"
+      ],
+      "provides": [
+        "CardinalityImpactReport"
+      ],
+      "renders": [
+        "CardinalityImpactReport"
+      ],
+      "accepts": [
+        "ObjectCentricEventLog"
+      ],
+      "consumes": [
+        "CardinalityImpactReport",
+        "ObjectCentricEventLog"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.cardinality-impact-explorer.analyze",
+          "label": "Explore Cardinality Impact",
+          "inputs": [
+            "ObjectCentricEventLog"
+          ],
+          "outputs": [
+            "CardinalityImpactReport"
+          ],
+          "runtime": "pyodide"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.1.0",
+          "url": "packages/run.promenade.cardinality-impact-explorer-0.1.0.pmplugin",
+          "sha256": "31508a644999c75ec09ea8e9c565a7ddcffadce318db8ad82a9d89f825f18110",
+          "bytes": 13905,
+          "released": "2026-08-28",
+          "changelog": "Initial release: an interactive cardinality scenario explorer for OCEL logs, with object relation cards, 1:n controls, target lifecycle variants, lead-time and rework indicators, an affected-activity map, and operational breakdown controls when matching attributes exist."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.declare",
+      "name": "DECLARE",
+      "description": "Declarative process mining: instead of a model you can walk through, a list of rules the process never broke — “every claim is eventually assessed”, “payment only happens after approval”, “these two never both occur”. This is the paradigm for flexible processes, where the imperative model is a spaghetti diagram that allows almost everything and explains nothing. Discovers a DECLARE model from a log, and checks any DECLARE model against any log, naming the cases that broke each rule.",
+      "runtime": "wasm + view",
+      "authors": [
+        {
+          "name": "István Koren",
+          "email": "korenistvan@inf.elte.hu",
+          "affiliation": "ELTE University Budapest, Data Science and Engineering",
+          "orcid": "0000-0003-1350-6732"
+        }
+      ],
+      "citation": {
+        "text": "Pesic, M., Schonenberg, H. and van der Aalst, W.M.P. (2007). DECLARE: Full Support for Loosely-Structured Processes. EDOC 2007, 287-298. Discovery follows Maggi, F.M., Bose, R.P.J.C. and van der Aalst, W.M.P. (2012), Efficient Discovery of Understandable Declarative Process Models from Event Logs, CAiSE 2012, LNCS 7328, 270-285.",
+        "doi": "10.1109/EDOC.2007.14",
+        "bibtex": "@inproceedings{pesic2007declare,\n  title     = {DECLARE: Full Support for Loosely-Structured Processes},\n  author    = {Pesic, Maja and Schonenberg, Helen and van der Aalst, Wil M. P.},\n  booktitle = {EDOC 2007},\n  pages     = {287--298}, year = {2007},\n  doi       = {10.1109/EDOC.2007.14}\n}"
+      },
+      "keywords": [
+        "declare",
+        "declarative",
+        "constraints",
+        "conformance",
+        "ltl",
+        "flexible-processes",
+        "rust"
+      ],
+      "provides": [
+        "DeclareModel",
+        "DeclareDiagnostics"
+      ],
+      "renders": [
+        "DeclareModel",
+        "DeclareDiagnostics"
+      ],
+      "accepts": [
+        "TraditionalEventLog",
+        "DeclareModel"
+      ],
+      "consumes": [
+        "DeclareModel",
+        "DeclareDiagnostics",
+        "TraditionalEventLog"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.declare.discover",
+          "label": "Discover DECLARE model",
+          "description": "Measures every candidate rule over the log's activities — eighteen templates over every ordered pair — and keeps the ones that hold often enough and were put to the test often enough. Support is how often a rule held; confidence is how often it held when it could have been broken, so a rule about something that almost never happens cannot coast on an empty truth. Redundant rules are removed: if the log obeys “A is always immediately followed by B” there is no point also reporting “A is eventually followed by B”.",
+          "inputs": [
+            "TraditionalEventLog"
+          ],
+          "outputs": [
+            "DeclareModel"
+          ],
+          "runtime": "wasm"
+        },
+        {
+          "id": "run.promenade.declare.check",
+          "label": "Check DECLARE rules",
+          "description": "Checks a DECLARE model against a log, case by case: which rules were broken, how often, and by which cases. A declarative model makes this simpler than alignment does — there is no search and no cost, only a rule and the cases that broke it. Rules the log never activates are reported separately, because a model that says nothing about a log is a different finding from a model it obeys.",
+          "inputs": [
+            "TraditionalEventLog",
+            "DeclareModel"
+          ],
+          "outputs": [
+            "DeclareDiagnostics"
+          ],
+          "runtime": "wasm"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.1.0",
+          "url": "packages/run.promenade.declare-0.1.0.pmplugin",
+          "sha256": "7e97ce9510fb6455ae88c4e066a0d74eded79397ec77b3e4ac306450f96ed4a8",
+          "bytes": 209851
+        },
+        {
+          "version": "0.1.1",
+          "url": "packages/run.promenade.declare-0.1.1.pmplugin",
+          "sha256": "37ff6bf0075670a4734fd245a7a77731dea3d8d08b9d75755ec88bbe1f35046f",
+          "bytes": 210436
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.dfg-rs",
+      "name": "Directly-Follows Graph (Rust)",
+      "description": "Discovers a directly-follows graph from an event log: for every pair of activities that occur back-to-back within a case, the number of times it happens, plus per-case start/end activities and per-activity frequency. Promenade's first Promenade Compute plugin — the package also ships a wasm32-wasip1 build of the same algorithm, run through Wasmtime by a compute engine instead of a browser worker.",
+      "runtime": "wasm",
+      "authors": [
+        {
+          "name": "István Koren",
+          "email": "korenistvan@inf.elte.hu",
+          "affiliation": "ELTE University Budapest, Data Science and Engineering",
+          "orcid": "0000-0003-1350-6732"
+        }
+      ],
+      "homepage": "https://github.com/promenade-lab/dfg-rs",
+      "keywords": [
+        "dfg",
+        "directly-follows",
+        "discovery",
+        "rust",
+        "compute"
+      ],
+      "provides": [
+        "DFG"
+      ],
+      "accepts": [
+        "TraditionalEventLog"
+      ],
+      "consumes": [
+        "TraditionalEventLog"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.dfg-rs.discover",
+          "label": "Discover DFG (Rust)",
+          "inputs": [
+            "TraditionalEventLog"
+          ],
+          "outputs": [
+            "DFG"
+          ],
+          "runtime": "wasm"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.1.0",
+          "url": "packages/run.promenade.dfg-rs-0.1.0.pmplugin",
+          "sha256": "9c0eb6c3172661a47b8368f164a09323a3e9797c0adf93566d7ea1428699420b",
+          "bytes": 113325,
+          "released": "2026-08-25",
+          "changelog": "Initial release: discovers a directly-follows graph from an event log — the frequency of every back-to-back activity pair within a case, plus per-case start/end activities and per-activity frequency."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.dotted-chart",
+      "name": "Dotted Chart",
+      "description": "A dotted chart of events over time: rows by case, activity, resource or object type; color by any of those; actual, relative or logical time; sortable rows. Ships as a worked example of the sandboxed third-party view boundary: opaque origin, no host DOM, no storage, data only through promenade.sql().",
+      "runtime": "view",
+      "authors": [
+        {
+          "name": "Promenade Team"
+        }
+      ],
+      "keywords": [
+        "dotted-chart",
+        "visualization",
+        "view"
+      ],
+      "renders": [
+        "ObjectCentricEventLog",
+        "TraditionalEventLog"
+      ],
+      "consumes": [
+        "ObjectCentricEventLog",
+        "TraditionalEventLog"
+      ],
+      "versions": [
+        {
+          "version": "0.6.5",
+          "url": "packages/run.promenade.dotted-chart-0.6.5.pmplugin",
+          "sha256": "250020efa31364309454e5f190e9b11c28a1c85b8e9df093fc057228868903f3",
+          "bytes": 13067,
+          "released": "2026-08-22",
+          "changelog": "Removes click-to-select row highlighting: clicking anywhere on the canvas dimmed every other row, but the effect was imperceptible against the chart's already-sparse dots. The chart no longer reacts to clicks or to a selection made elsewhere; the legend's click-to-highlight-by-color is unaffected."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.event-log-transformations",
+      "name": "Event Log Transformations",
+      "description": "Compares two object-centric event logs: strict equality across every relation, structural equivalence up to identifier and generated-type renaming (a bounded 1-WL color-refinement bijection with a capped backtracking search), reciprocal coverage percentages when they differ, and suspected automatic renames (case, whitespace or normalization — e.g. a SQLite export sanitizing a table name) on object-type, event-type and attribute names. The structural verdict is an explicitly bounded approximation, reported as undetermined rather than guessed when the search budget is reached.",
+      "runtime": "pyodide + view",
+      "authors": [
+        {
+          "name": "István Koren",
+          "email": "korenistvan@inf.elte.hu",
+          "affiliation": "ELTE University Budapest, Data Science and Engineering",
+          "orcid": "0000-0003-1350-6732"
+        }
+      ],
+      "citation": {
+        "text": "Strict equality and structural isomorphism follow the OCEL equivalence definitions of the transformation-calculus draft (Definitions 1–2). The structural decision procedure is a bounded 1-dimensional Weisfeiler–Leman colour refinement with a capped backtracking search, not a complete isomorphism test."
+      },
+      "keywords": [
+        "comparison",
+        "object-centric",
+        "ocel",
+        "event-log",
+        "equivalence",
+        "isomorphism",
+        "rename-detection",
+        "transformation"
+      ],
+      "provides": [
+        "EventLogComparison"
+      ],
+      "renders": [
+        "EventLogComparison"
+      ],
+      "accepts": [
+        "ObjectCentricEventLog"
+      ],
+      "consumes": [
+        "EventLogComparison",
+        "ObjectCentricEventLog"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.event-log-transformations.compare",
+          "label": "Compare event logs",
+          "inputs": [
+            "ObjectCentricEventLog",
+            "ObjectCentricEventLog"
+          ],
+          "outputs": [
+            "EventLogComparison"
+          ],
+          "runtime": "pyodide"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.1.0",
+          "url": "packages/run.promenade.event-log-transformations-0.1.0.pmplugin",
+          "sha256": "4b5c0767989468b9ddc5e6084ae426bdd1bb44bc7dd636d85e9a9a024638fab8",
+          "bytes": 15856,
+          "released": "2026-08-31",
+          "changelog": "Initial release: two-input OCEL comparison — strict equality with sampled differing tuples, bounded structural equivalence, reciprocal coverage and per-type deltas, suspected-rename detection, and a sandboxed report view."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.friction-topography",
+      "name": "Process Friction Topography",
+      "description": "A performance overlay that makes waiting time part of the model's geometry. The discovered process keeps an ordinary layered ground plan; elevation is a friction statistic interpolated into a surface, so valleys are the routine high-volume path, ridges are where cases queue, and a whole slow region of the process reads as a plateau rather than as several red nodes. Clicking a peak opens the variants, cases, resources and wait distribution behind it. Rendered with three.js WebGPURenderer, falling back to WebGL 2.",
+      "runtime": "view",
+      "authors": [
+        {
+          "name": "István Koren",
+          "email": "korenistvan@inf.elte.hu",
+          "affiliation": "ELTE University Budapest, Data Science and Engineering",
+          "orcid": "0000-0003-1350-6732"
+        }
+      ],
+      "homepage": "https://github.com/promenade-lab/friction-topography",
+      "keywords": [
+        "performance",
+        "bottleneck",
+        "waiting-time",
+        "queue",
+        "rework",
+        "3d",
+        "webgpu",
+        "terrain",
+        "visual-analytics",
+        "view"
+      ],
+      "renders": [
+        "TraditionalEventLog",
+        "ObjectCentricEventLog"
+      ],
+      "consumes": [
+        "TraditionalEventLog",
+        "ObjectCentricEventLog"
+      ],
+      "experimental": true,
+      "versions": [
+        {
+          "version": "0.1.6",
+          "url": "packages/run.promenade.friction-topography-0.1.6.pmplugin",
+          "sha256": "97fbeceb18e7b573e066967c1bde55a9b2f10e83aadf7075889f7e2f5204b3d4",
+          "bytes": 882577,
+          "released": "2026-09-04",
+          "changelog": "Fixes the \"Station labels\" toggle: it set the param like every other toggle but nothing read it, so the station name pills were built unconditionally. It now actually gates them; the queue and rework callouts and the elevation axis stay visible either way."
+        },
+        {
+          "version": "0.1.7",
+          "url": "packages/run.promenade.friction-topography-0.1.7.pmplugin",
+          "sha256": "cf1e882948ac1d9f39b5d67440d93014debd5ac1c1997df8cd5fe8c42825f20e",
+          "bytes": 883237,
+          "released": "2026-09-16",
+          "changelog": "The palette now follows Promenade's own appearance setting: `auto` is the default and resolves from the host theme, so a light app no longer opens a black panel inside itself. `topographic` and `relief` still pin it explicitly."
+        },
+        {
+          "version": "0.1.8",
+          "url": "packages/run.promenade.friction-topography-0.1.8.pmplugin",
+          "sha256": "3bca0f6fdeeb3e78164e192f8f8fdd5b0a8a270d58af92da6a7791178a47ec89",
+          "bytes": 883685,
+          "released": "2026-09-16",
+          "changelog": "The light scheme's flow ribbons are translucent again. Additive blending cannot work on a white ground, so light had fallen back to near-opaque bands that hid the terrain; the core is now see-through and the glow returns as a colour washed toward white."
+        },
+        {
+          "version": "0.1.9",
+          "url": "packages/run.promenade.friction-topography-0.1.9.pmplugin",
+          "sha256": "a2e12003c7e539116f72bc25667a35ad4c2f03952678aa5b9dd5bdbbfb88334d",
+          "bytes": 884229,
+          "released": "2026-09-16",
+          "changelog": "Flow marks no longer go missing in the light scheme — they now draw after the ribbons they ride on, instead of being sorted arbitrarily against them. A lost GPU device switches the view to WebGL 2 rather than leaving a frozen canvas."
+        },
+        {
+          "version": "0.1.10",
+          "url": "packages/run.promenade.friction-topography-0.1.10.pmplugin",
+          "sha256": "0a91014dee21bd4b7fcea8925ea7f0db182cec752e8bd8fd41a8636d60ac1962",
+          "bytes": 884718,
+          "released": "2026-09-16",
+          "changelog": "Switching palette no longer stalls the view. The two terrain rasters are painted pixel by pixel in JS and were repainted on every switch; they are now cached per palette, so returning to one you have already used costs nothing."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.fuzzy-miner",
+      "name": "Fuzzy Miner",
+      "description": "Günther & van der Aalst's Fuzzy Miner for case-centric event logs: instead of a control-flow model it measures the log from several perspectives — frequency and routing significance per activity, frequency and distance significance per relation, and proximity, endpoint and originator correlation — and hands back the whole weighted graph. Simplification is interactive: the Fuzzy graph view's collapsible slider rail resolves concurrency conflicts, thins edges and folds insignificant activities into clusters, live, exactly the way ProM's original does.",
+      "runtime": "wasm + view",
+      "authors": [
+        {
+          "name": "Promenade Team"
+        }
+      ],
+      "citation": {
+        "text": "Günther, C.W., van der Aalst, W.M.P. (2007). Fuzzy Mining – Adaptive Process Simplification Based on Multi-Perspective Metrics. In: Business Process Management (BPM 2007), LNCS 4714, pp. 328–343.",
+        "bibtex": "@inproceedings{gunther2007fuzzy,\n  title     = {Fuzzy Mining -- Adaptive Process Simplification Based on Multi-Perspective Metrics},\n  author    = {G{\\\"u}nther, Christian W. and van der Aalst, Wil M. P.},\n  booktitle = {Business Process Management (BPM 2007)},\n  series    = {Lecture Notes in Computer Science},\n  volume    = {4714},\n  pages     = {328--343},\n  year      = {2007},\n  publisher = {Springer}\n}"
+      },
+      "keywords": [
+        "discovery",
+        "fuzzy-miner",
+        "simplification",
+        "spaghetti",
+        "react-flow",
+        "rust"
+      ],
+      "provides": [
+        "FuzzyModel"
+      ],
+      "renders": [
+        "FuzzyModel"
+      ],
+      "accepts": [
+        "TraditionalEventLog"
+      ],
+      "consumes": [
+        "FuzzyModel",
+        "TraditionalEventLog"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.fuzzy-miner.discover",
+          "label": "Fuzzy Miner",
+          "inputs": [
+            "TraditionalEventLog"
+          ],
+          "outputs": [
+            "FuzzyModel"
+          ],
+          "runtime": "wasm"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.2.1",
+          "url": "packages/run.promenade.fuzzy-miner-0.2.1.pmplugin",
+          "sha256": "63850b426c030de2c19cc9547edbdeeeefdf75af85db37f8bc2dde6968b8bc77",
+          "bytes": 636049,
+          "released": "2026-09-03",
+          "changelog": "Fixes the 0.2.0 arrowhead fix itself: nodes are laid out at their real size again (not padded), so edge ports spread across a node's true width instead of compressing onto a narrower band of it; the arrowhead clearance is now applied to the rendered path only."
+        },
+        {
+          "version": "0.3.0",
+          "url": "packages/run.promenade.fuzzy-miner-0.3.0.pmplugin",
+          "sha256": "b9bfa1721168d59b1454c4ce9af231e682d6dd215fe5e58cc2a83c835be426be",
+          "bytes": 701992,
+          "released": "2026-09-14",
+          "changelog": "Adds a Fuzzy metrics view alongside the graph — a coloured n x n matrix over activity pairs (the two weighted totals plus the five raw metrics behind them, once mined with per-metric detail enabled), with a per-activity bar in the row gutter, hover tooltips, click-to-select shared with the graph view, and a PNG export."
+        },
+        {
+          "version": "0.3.1",
+          "url": "packages/run.promenade.fuzzy-miner-0.3.1.pmplugin",
+          "sha256": "1474a4bb9839d9d6c41a2c34b3b35dd14bcb3b229767ea2a37b1eca8eeafd963",
+          "bytes": 702373,
+          "released": "2026-09-14",
+          "changelog": "Hardens the Fuzzy metrics view's theme handling: colour tokens use || instead of ?? so an empty-string theme value falls back to a sane default instead of reaching a canvas fillStyle as-is, which silently keeps its previous (black) colour on an invalid value rather than erroring."
+        },
+        {
+          "version": "0.4.0",
+          "url": "packages/run.promenade.fuzzy-miner-0.4.0.pmplugin",
+          "sha256": "0060c44d9a91b3b3188b2fff2984969d459a4b3dd13d9fc5dbe7051b45aeda2e",
+          "bytes": 706726,
+          "released": "2026-09-15",
+          "changelog": "Closes three gaps found checking against ProM's real source: a per-metric Invert toggle for all seven raw metrics (mirrors each around its own weight, matching the Python reference's exact semantics); the maximal event distance cap raised from 5 to 20 (ProM allows 0-100; 20 balances usefulness against WASM scan memory); and a Curves mode in the Fuzzy metrics view, ProM's other metrics panel, overlaying the unary metrics (overall/frequency/routing significance) as line charts alongside the existing binary-metric matrix."
+        },
+        {
+          "version": "0.5.0",
+          "url": "packages/run.promenade.fuzzy-miner-0.5.0.pmplugin",
+          "sha256": "778aa0ce413b3a41c3c2c8bd57328372b8e35d5a007a42b20523d8b4b2512ab3",
+          "bytes": 708875,
+          "released": "2026-09-15",
+          "changelog": "Adds a Distances mode to the Fuzzy metrics view, a diagnostic ProM itself never had: a bar per look-back distance showing how many relation observations the scan actually found there, with the current attenuation curve overlaid, and the current maximal-distance cutoff marked so it's visible whether raising it (an Inspector-only param) would capture more real data. New distanceHistogram field on the model, computed straight from the scan's raw accumulator so it doesn't depend on maximalDistance."
+        },
+        {
+          "version": "0.5.1",
+          "url": "packages/run.promenade.fuzzy-miner-0.5.1.pmplugin",
+          "sha256": "30eca16739125cac8c0c8af7483ae5745a743db2364ad071f94d91cf5e14d34f",
+          "bytes": 708970,
+          "released": "2026-09-15",
+          "changelog": "Declares `family: \"model\"` on `FuzzyModel`, so a mined fuzzy model is coloured as a model rather than as an outcome in the artifact tree."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.heuristics-miner",
+      "name": "Heuristics Miner",
+      "description": "Flexible Heuristics Miner: discovers a causal net or an accepting Petri net with silent routing transitions, tolerant of noisy/infrequent behavior that would throw off Alpha Miner's exact footprint relations.",
+      "runtime": "wasm + view",
+      "authors": [
+        {
+          "name": "Promenade Team"
+        }
+      ],
+      "citation": {
+        "text": "Weijters, A.J.M.M., van der Aalst, W.M.P., de Medeiros, A.K.A. (2006). Process Mining with the Heuristics Miner Algorithm. BETA Working Paper Series, WP 166.",
+        "bibtex": "@techreport{weijters2006heuristics,\n  title  = {Process Mining with the Heuristics Miner Algorithm},\n  author = {Weijters, A. J. M. M. and van der Aalst, W. M. P. and de Medeiros, A. K. Alves},\n  institution = {Eindhoven University of Technology},\n  series = {BETA Working Paper Series},\n  number = {WP 166},\n  year   = {2006}\n}"
+      },
+      "homepage": "https://github.com/promenade-lab/heuristics-miner",
+      "keywords": [
+        "discovery",
+        "causal-net",
+        "heuristics-miner",
+        "rust"
+      ],
+      "provides": [
+        "CausalNet",
+        "AcceptingPetriNet"
+      ],
+      "accepts": [
+        "TraditionalEventLog"
+      ],
+      "consumes": [
+        "CausalNet",
+        "TraditionalEventLog"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.heuristics-miner.discover",
+          "label": "Heuristics Miner",
+          "inputs": [
+            "TraditionalEventLog"
+          ],
+          "outputs": [
+            "CausalNet"
+          ],
+          "runtime": "wasm"
+        },
+        {
+          "id": "run.promenade.heuristics-miner.discoverPetriNet",
+          "label": "Heuristics Miner → Petri net",
+          "inputs": [
+            "TraditionalEventLog"
+          ],
+          "outputs": [
+            "AcceptingPetriNet"
+          ],
+          "runtime": "wasm"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.2.0",
+          "url": "packages/run.promenade.heuristics-miner-0.2.0.pmplugin",
+          "sha256": "1544d13977928c311ec660a13a0daee40ab57e5b312eabf83db60fb44a26be5b",
+          "bytes": 51446,
+          "released": "2026-08-21",
+          "changelog": "Adds Heuristics Miner → Petri net: inferred AND/XOR split and join groups become silent routing transitions in an Accepting Petri Net, ready for PNML export and alignment-based conformance."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.inductive-miner",
+      "name": "Inductive Miner",
+      "description": "Leemans' Inductive Miner (IM and IMf) in Rust: recursively cuts the directly-follows graph into a block-structured process tree. Always returns a sound model — unlike Alpha Miner it cannot fail — and IMf tolerates infrequent behavior without giving that up. Verified against ProM's own implementation over ~208,000 differential cases.",
+      "runtime": "wasm",
+      "authors": [
+        {
+          "name": "Promenade Team"
+        }
+      ],
+      "citation": {
+        "text": "Leemans, S.J.J., Fahland, D., van der Aalst, W.M.P. (2013). Discovering Block-Structured Process Models from Event Logs — A Constructive Approach. Petri Nets 2013, LNCS 7927, 311–329. Infrequent-behaviour variant: Leemans, Fahland, van der Aalst (2014), BPM Workshops 2013, LNBIP 171, 66–78.",
+        "doi": "10.1007/978-3-642-38697-8_17",
+        "bibtex": "@inproceedings{leemans2013inductive,\n  title     = {Discovering Block-Structured Process Models from Event Logs -- A Constructive Approach},\n  author    = {Leemans, Sander J. J. and Fahland, Dirk and van der Aalst, Wil M. P.},\n  booktitle = {Application and Theory of Petri Nets and Concurrency (Petri Nets 2013)},\n  series    = {LNCS},\n  volume    = {7927},\n  pages     = {311--329},\n  year      = {2013},\n  doi       = {10.1007/978-3-642-38697-8_17}\n}\n\n@inproceedings{leemans2014infrequent,\n  title     = {Discovering Block-Structured Process Models from Event Logs Containing Infrequent Behaviour},\n  author    = {Leemans, Sander J. J. and Fahland, Dirk and van der Aalst, Wil M. P.},\n  booktitle = {Business Process Management Workshops 2013},\n  series    = {LNBIP},\n  volume    = {171},\n  pages     = {66--78},\n  year      = {2014},\n  doi       = {10.1007/978-3-319-06257-0_6}\n}"
+      },
+      "homepage": "https://github.com/promenade-lab/inductive-miner",
+      "keywords": [
+        "discovery",
+        "process-tree",
+        "inductive-miner",
+        "rust"
+      ],
+      "provides": [
+        "ProcessTree"
+      ],
+      "accepts": [
+        "TraditionalEventLog"
+      ],
+      "consumes": [
+        "TraditionalEventLog"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.inductive-miner.discover",
+          "label": "Inductive Miner",
+          "inputs": [
+            "TraditionalEventLog"
+          ],
+          "outputs": [
+            "ProcessTree"
+          ],
+          "runtime": "wasm"
+        }
+      ],
+      "recommends": [
+        {
+          "id": "run.promenade.process-tree-view",
+          "reason": "draws the process trees this plugin produces"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.1.2",
+          "url": "packages/run.promenade.inductive-miner-0.1.2.pmplugin",
+          "sha256": "b1bdf52e3d10a00aafb379ff57389ddaaf257e35166e3e3ee98666ee0f02bbf1",
+          "bytes": 115676,
+          "released": "2026-08-17",
+          "changelog": "\"Activity limit\" renamed to \"Distinct activities\": it read as though it capped events. There is no event limit here — every event is read, however many. The Road Traffic Fine Management log (561,470 events, 11 distinct activities) mines in 796 ms with nothing dropped. The pm4py plugin's \"Event limit\" is a different quantity: it truncates the log because pm4py holds it in memory as a DataFrame."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.inductive-py",
+      "name": "Inductive Miner (pm4py)",
+      "description": "Discovers a process tree with pm4py's inductive miner, and converts it to an accepting Petri net. Runs in Pyodide.",
+      "runtime": "pyodide + view",
+      "authors": [
+        {
+          "name": "Promenade Team"
+        }
+      ],
+      "keywords": [
+        "discovery",
+        "pm4py",
+        "python",
+        "process-tree"
+      ],
+      "provides": [
+        "ProcessTree",
+        "AcceptingPetriNet"
+      ],
+      "accepts": [
+        "TraditionalEventLog",
+        "ProcessTree"
+      ],
+      "consumes": [
+        "AcceptingPetriNet",
+        "TraditionalEventLog",
+        "ProcessTree"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.inductive-py.discover",
+          "label": "Inductive Miner (pm4py)",
+          "description": "Discovers a process tree from a traditional event log with pm4py's IMf variant. The tree is sound and block-structured by construction, so it always replays; the noise threshold trades fitness for simplicity.",
+          "inputs": [
+            "TraditionalEventLog"
+          ],
+          "outputs": [
+            "ProcessTree"
+          ],
+          "runtime": "pyodide"
+        },
+        {
+          "id": "run.promenade.inductive-py.toPetriNet",
+          "label": "Process tree → Petri net",
+          "description": "Converts a process tree into a behaviourally equivalent accepting Petri net, with an initial and a final marking.",
+          "inputs": [
+            "ProcessTree"
+          ],
+          "outputs": [
+            "AcceptingPetriNet"
+          ],
+          "runtime": "pyodide"
+        }
+      ],
+      "recommends": [
+        {
+          "id": "run.promenade.process-tree-view",
+          "reason": "draws the process trees this plugin produces"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.2.3",
+          "url": "packages/run.promenade.inductive-py-0.2.3.pmplugin",
+          "sha256": "46e230a49ac39a252d7b1b7e082b5623814bcdf722a88a1b470b54231e9c34eb",
+          "bytes": 6571,
+          "released": "2026-08-17",
+          "changelog": "Both actions now carry a description and agent notes, surfaced in the Inspector tooltip and to `promenade_list_actions`. \"Event limit\" is capped at what the selected log actually has, instead of a fixed five-million ceiling that meant nothing on a smaller one."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.inductive-visual-miner",
+      "name": "Inductive Visual Miner",
+      "description": "Browser-native alignment-backed process-model replay: aligns an Accepting Petri Net with a Traditional Event Log in Rust/WASM, once per distinct trace variant, then animates a bounded representative token flow over the model's ELK spline geometry. The animation combines individual particles, restrained edge-flow emphasis and transition pulses rather than opaque token circles.",
+      "runtime": "wasm + view",
+      "authors": [
+        {
+          "name": "Promenade Team"
+        }
+      ],
+      "citation": {
+        "text": "S. J. J. Leemans, D. Fahland and W. M. P. van der Aalst. Exploring Processes Using Inductive Visual Miner. PETRI NETS 2014 Demonstration Track.",
+        "url": "https://www.leemans.ch/publications/ivm%20ProM%206.9.pdf"
+      },
+      "keywords": [
+        "inductive visual miner",
+        "alignment",
+        "token replay",
+        "petri-net",
+        "rust",
+        "wasm",
+        "react-flow",
+        "animation"
+      ],
+      "provides": [
+        "VisualMinerReplay",
+        "DirectlyFollowsVisualMinerReplay"
+      ],
+      "renders": [
+        "VisualMinerReplay",
+        "DirectlyFollowsVisualMinerReplay"
+      ],
+      "accepts": [
+        "TraditionalEventLog",
+        "AcceptingPetriNet"
+      ],
+      "consumes": [
+        "VisualMinerReplay",
+        "DirectlyFollowsVisualMinerReplay",
+        "TraditionalEventLog",
+        "AcceptingPetriNet"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.inductive-visual-miner.replay",
+          "label": "Inductive Visual Miner",
+          "inputs": [
+            "TraditionalEventLog",
+            "AcceptingPetriNet"
+          ],
+          "outputs": [
+            "VisualMinerReplay"
+          ],
+          "runtime": "wasm"
+        },
+        {
+          "id": "run.promenade.inductive-visual-miner.dfg-replay",
+          "label": "Mine with Directly-Follows Visual Miner",
+          "inputs": [
+            "TraditionalEventLog"
+          ],
+          "outputs": [
+            "DirectlyFollowsVisualMinerReplay"
+          ],
+          "runtime": "wasm"
+        },
+        {
+          "id": "run.promenade.inductive-visual-miner.lifecycle-replay",
+          "label": "Inductive Visual Miner (lifecycle)",
+          "inputs": [
+            "TraditionalEventLog",
+            "AcceptingPetriNet"
+          ],
+          "outputs": [
+            "VisualMinerReplay"
+          ],
+          "runtime": "wasm"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.3.11",
+          "url": "packages/run.promenade.inductive-visual-miner-0.3.11.pmplugin",
+          "sha256": "31bab588eba075de6584abfd0a2187811918d7afe25642bd7140ada63dc477df",
+          "bytes": 1227991,
+          "released": "2026-08-29",
+          "changelog": "\"Export as figure…\" now fits the whole diagram into view before capturing, in both the Inductive Visual Miner and Directly-Follows Visual Miner views, instead of exporting whatever was panned/zoomed into the visible viewport, then restores the user's own view afterwards."
+        },
+        {
+          "version": "0.3.12",
+          "url": "packages/run.promenade.inductive-visual-miner-0.3.12.pmplugin",
+          "sha256": "835287c0f8660c0971b938432a8a501154f7675c6925336ca29c311024015cd6",
+          "bytes": 1228102,
+          "released": "2026-09-15",
+          "changelog": "Declares `family: \"model\"` on both replay types, so a mined replay is coloured as a model rather than as an outcome in the artifact tree."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.interaction-atlas",
+      "name": "Interaction Atlas",
+      "description": "Object-centric visual analytics for when and how object types co-occur over their lifecycles. The upper-triangular atlas opens a lifecycle-interaction tomogram with exact rectangular or lasso-bin selection, inversion, selection-versus-remainder comparison, source-bound cohort interchange, replay-aware panels, and experimental non-causal contextual analyses.",
+      "runtime": "view",
+      "authors": [
+        {
+          "name": "István Koren",
+          "email": "korenistvan@inf.elte.hu",
+          "affiliation": "ELTE University Budapest, Data Science and Engineering",
+          "orcid": "0000-0003-1350-6732"
+        }
+      ],
+      "keywords": [
+        "object-centric",
+        "ocel",
+        "visual-analytics",
+        "interaction",
+        "lifecycle"
+      ],
+      "renders": [
+        "ObjectCentricEventLog",
+        "ObjectCentricExecutionPartition"
+      ],
+      "consumes": [
+        "ObjectCentricEventLog",
+        "ObjectCentricExecutionPartition"
+      ],
+      "experimental": true,
+      "versions": [
+        {
+          "version": "0.1.22",
+          "url": "packages/run.promenade.interaction-atlas-0.1.22.pmplugin",
+          "sha256": "e6ad92611b05f22363fd8f20c2bf7c2777f9995ea5e7911a70974d458bca99f6",
+          "bytes": 42532,
+          "released": "2026-08-28",
+          "changelog": "Documents the host-managed interaction-cohort-v1 interchange for exact lasso cohorts. Compatible views receive only source-bound, host-validated membership and discrete bin masks; Performance Spectrum is the first consumer.",
+          "channel": "dev"
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.log-quality",
+      "name": "Log Quality",
+      "description": "Data-quality analysis for XES and OCEL logs. Produces an actionable report across specification, referential integrity, temporal plausibility, structural smells, qualifier consistency, attributes and portability, following Ocelot's Quality linter catalog.",
+      "runtime": "pyodide + view",
+      "authors": [
+        {
+          "name": "István Koren",
+          "email": "korenistvan@inf.elte.hu",
+          "affiliation": "ELTE University Budapest, Data Science and Engineering",
+          "orcid": "0000-0003-1350-6732"
+        }
+      ],
+      "keywords": [
+        "quality",
+        "linter",
+        "validation",
+        "xes",
+        "ocel",
+        "data-quality"
+      ],
+      "provides": [
+        "LogQualityReport"
+      ],
+      "renders": [
+        "LogQualityReport"
+      ],
+      "accepts": [
+        "TraditionalEventLog",
+        "ObjectCentricEventLog"
+      ],
+      "consumes": [
+        "LogQualityReport",
+        "TraditionalEventLog",
+        "ObjectCentricEventLog"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.log-quality.analyze-xes",
+          "label": "Analyze Log Quality",
+          "inputs": [
+            "TraditionalEventLog"
+          ],
+          "outputs": [
+            "LogQualityReport"
+          ],
+          "runtime": "pyodide"
+        },
+        {
+          "id": "run.promenade.log-quality.analyze-ocel",
+          "label": "Analyze Log Quality",
+          "inputs": [
+            "ObjectCentricEventLog"
+          ],
+          "outputs": [
+            "LogQualityReport"
+          ],
+          "runtime": "pyodide"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.2.3",
+          "url": "packages/run.promenade.log-quality-0.2.3.pmplugin",
+          "sha256": "ed71069071b4b268ed8bf832caf7f92db3bdbf126787107c8864801a59ddfb65",
+          "bytes": 20174,
+          "changelog": "Documentation only. The host preserves microsecond timestamps at import now, so the notes explaining the tied-timestamp repair in terms of a millisecond grid described a constraint that is gone. The repair itself is unchanged."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.log-skeleton",
+      "name": "Log Skeleton",
+      "description": "The facts a log never broke: which activities always follow which, which never occur together, which occur equally often, and how many times each may occur in a case. A log skeleton is not a model you walk through — it is a classifier, and it won the Process Discovery Contest by deciding whether a trace belongs rather than by drawing a diagram. Discover one from a log, then check any other log against it.",
+      "runtime": "wasm + view",
+      "authors": [
+        {
+          "name": "István Koren",
+          "email": "korenistvan@inf.elte.hu",
+          "affiliation": "ELTE University Budapest, Data Science and Engineering",
+          "orcid": "0000-0003-1350-6732"
+        }
+      ],
+      "citation": {
+        "text": "Verbeek, H.M.W. and de Carvalho, R.M. (2018). Log skeletons: a classification approach to process discovery. arXiv:1806.08247. The four ordering relations are evaluated by the DECLARE plugin's crate, which implements the same semantics under their DECLARE names.",
+        "doi": "10.48550/arXiv.1806.08247",
+        "bibtex": "@article{verbeek2018logskeletons,\n  title   = {Log Skeletons: A Classification Approach to Process Discovery},\n  author  = {Verbeek, H. M. W. and de Carvalho, R. Medeiros},\n  journal = {arXiv:1806.08247},\n  year    = {2018},\n  doi     = {10.48550/arXiv.1806.08247}\n}"
+      },
+      "keywords": [
+        "log-skeleton",
+        "classification",
+        "conformance",
+        "declarative",
+        "process-discovery-contest",
+        "rust"
+      ],
+      "provides": [
+        "LogSkeleton",
+        "LogSkeletonDiagnostics"
+      ],
+      "renders": [
+        "LogSkeleton",
+        "LogSkeletonDiagnostics"
+      ],
+      "accepts": [
+        "TraditionalEventLog",
+        "LogSkeleton"
+      ],
+      "consumes": [
+        "LogSkeleton",
+        "LogSkeletonDiagnostics",
+        "TraditionalEventLog"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.log-skeleton.discover",
+          "label": "Discover log skeleton",
+          "description": "Records every fact that held in the log: equivalence (two activities occur equally often), always-before and always-after (ordering at any distance), never-together, directly-follows, and the set of occurrence counts each activity was seen with. With no noise allowed, a fact is kept only if not one case broke it — which is what makes the result usable as a classifier rather than a summary.",
+          "inputs": [
+            "TraditionalEventLog"
+          ],
+          "outputs": [
+            "LogSkeleton"
+          ],
+          "runtime": "wasm"
+        },
+        {
+          "id": "run.promenade.log-skeleton.check",
+          "label": "Classify against a skeleton",
+          "description": "Decides, case by case, whether a log fits a skeleton: which facts each case broke, and which facts the log breaks most often. This is what the skeleton is for — there is no alignment, no cost and no search, only a fact and the cases that broke it.",
+          "inputs": [
+            "TraditionalEventLog",
+            "LogSkeleton"
+          ],
+          "outputs": [
+            "LogSkeletonDiagnostics"
+          ],
+          "runtime": "wasm"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.1.0",
+          "url": "packages/run.promenade.log-skeleton-0.1.0.pmplugin",
+          "sha256": "d3376b5c2d6fa89bde5bd61d6fa602d9203062afec725fe20a7c5b9681909279",
+          "bytes": 218727
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.lpm",
+      "name": "Local Process Models",
+      "description": "Discovers Local Process Models: small, frequently-recurring Petri-net fragments over a subset of a log's activities, each possibly firing several times within one trace. A recursive process-tree search (sequence/choice/parallel/inclusive-choice/loop operators) scored by alignment-based support, confidence, determinism, language fit and coverage — ported from Tax, Sidorova, Haakma & van der Aalst's LocalProcessModelDiscovery. Also covers object-centric event logs: discovers per object type, then merges structurally matching fragments across types and flags variable arcs.",
+      "runtime": "pyodide + relational + wasm + view",
+      "authors": [
+        {
+          "name": "Promenade Team"
+        }
+      ],
+      "citation": {
+        "text": "Tax, N., Sidorova, N., Haakma, R., van der Aalst, W.M.P. (2016). Mining Local Process Models. Journal of Innovation in Digital Ecosystems, 3(2), 183-196. Object-centric extension after Porsil, M. (RWTH Aachen, PADS), ObjectCentricLPMs.",
+        "doi": "10.1016/j.jides.2016.11.001",
+        "url": "https://github.com/promworkbench/LocalProcessModelDiscovery"
+      },
+      "keywords": [
+        "local-process-models",
+        "discovery",
+        "petri-net",
+        "object-centric",
+        "alignment",
+        "rust"
+      ],
+      "provides": [
+        "LocalProcessModelSet",
+        "AcceptingPetriNet",
+        "ObjectCentricPetriNet"
+      ],
+      "renders": [
+        "LocalProcessModelSet"
+      ],
+      "accepts": [
+        "TraditionalEventLog",
+        "LocalProcessModelSet",
+        "ObjectCentricEventLog"
+      ],
+      "consumes": [
+        "LocalProcessModelSet",
+        "TraditionalEventLog",
+        "ObjectCentricEventLog"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.lpm.discover",
+          "label": "Discover Local Process Models",
+          "description": "Recursive process-tree search over a subset of the log's activities, scored by alignment-based support, confidence, determinism, language fit and coverage.",
+          "inputs": [
+            "TraditionalEventLog"
+          ],
+          "outputs": [
+            "LocalProcessModelSet"
+          ],
+          "runtime": "wasm"
+        },
+        {
+          "id": "run.promenade.lpm.to-net",
+          "label": "Local Process Model → Petri Net",
+          "description": "Recompiles one ranked fragment back into a plain Petri net fragment, viewable with any Accepting Petri Net renderer.",
+          "inputs": [
+            "LocalProcessModelSet"
+          ],
+          "outputs": [
+            "AcceptingPetriNet"
+          ],
+          "runtime": "wasm"
+        },
+        {
+          "id": "run.promenade.lpm.project-oc",
+          "label": "Project for Local Process Models (object-centric)",
+          "inputs": [
+            "ObjectCentricEventLog"
+          ],
+          "outputs": [
+            "TraditionalEventLog"
+          ],
+          "runtime": "relational",
+          "internal": true
+        },
+        {
+          "id": "run.promenade.lpm.discover-oc",
+          "label": "Discover Local Process Models (object-centric)",
+          "description": "Discovers Local Process Models for one object type: flattens the OCEL by that type (one trace per object), then runs the same recursive process-tree search as the traditional action. Run once per object type, then combine the results with \"Combine Local Process Models across object types\".",
+          "inputs": [
+            "ObjectCentricEventLog"
+          ],
+          "outputs": [
+            "LocalProcessModelSet"
+          ],
+          "runtime": "wasm"
+        },
+        {
+          "id": "run.promenade.lpm.combine-oc",
+          "label": "Combine Local Process Models across object types",
+          "description": "Merges two per-object-type Local Process Model sets (from \"Discover Local Process Models (object-centric)\") into object-centric fragments: structurally matching patterns across the two types are merged into one multi-type fragment, and (activity, object type) pairs where the activity often relates to more than one object of that type are flagged as variable arcs.",
+          "inputs": [
+            "ObjectCentricEventLog",
+            "LocalProcessModelSet",
+            "LocalProcessModelSet"
+          ],
+          "outputs": [
+            "LocalProcessModelSet"
+          ],
+          "runtime": "pyodide"
+        },
+        {
+          "id": "run.promenade.lpm.to-ocpn",
+          "label": "Local Process Model → Object-Centric Petri Net",
+          "description": "Recompiles one merged, multi-type fragment (from \"Combine Local Process Models across object types\") into an Object-Centric Petri Net, viewable with any Object-Centric Petri Net renderer.",
+          "inputs": [
+            "LocalProcessModelSet"
+          ],
+          "outputs": [
+            "ObjectCentricPetriNet"
+          ],
+          "runtime": "wasm"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.1.3",
+          "url": "packages/run.promenade.lpm-0.1.3.pmplugin",
+          "sha256": "01169e721fd1223bdf223e2b184424f05b0c55dc256dc73280489085689a87d6",
+          "bytes": 115501,
+          "changelog": "Completes the 0.1.2 fix: `objectType` now has a static default and the projection treats an empty value as \"the single most frequent object type\", so running the action straight from the actions list — where a data-bound default never resolves — always binds it."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.metro-map",
+      "name": "Metro Map",
+      "description": "Renders an object-centric process as a transit-schematic 'metro map': activities become stations shared across object types, object types become color-coded lines routed with 45°-only turns and consistent parallel lane order, top to bottom in roughly process time order. Discover it from an Object-Centric Petri Net (choice/parallelism drawn as X/+ gateways read off the net structure) or from an Object-Centric Directly-Follows Graph (no gateways, but real per-station/per-arc frequencies and a complexity slider). Both mine their upstream model transparently as an internal stage.",
+      "runtime": "wasm + view",
+      "authors": [
+        {
+          "name": "István Koren",
+          "email": "korenistvan@inf.elte.hu",
+          "affiliation": "ELTE University Budapest, Data Science and Engineering",
+          "orcid": "0000-0003-1350-6732"
+        }
+      ],
+      "keywords": [
+        "object-centric",
+        "petri-net",
+        "bpmn",
+        "layout",
+        "schematic",
+        "rust",
+        "view"
+      ],
+      "provides": [
+        "OCMetroMap"
+      ],
+      "renders": [
+        "OCMetroMap"
+      ],
+      "accepts": [
+        "ObjectCentricEventLog"
+      ],
+      "consumes": [
+        "OCMetroMap",
+        "ObjectCentricEventLog"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.metro-map.discover",
+          "label": "Discover metro map",
+          "inputs": [
+            "ObjectCentricEventLog"
+          ],
+          "outputs": [
+            "OCMetroMap"
+          ],
+          "runtime": "wasm"
+        },
+        {
+          "id": "run.promenade.metro-map.discover-dfg",
+          "label": "Discover metro map (OC-DFG)",
+          "inputs": [
+            "ObjectCentricEventLog"
+          ],
+          "outputs": [
+            "OCMetroMap"
+          ],
+          "runtime": "wasm"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.17.3",
+          "url": "packages/run.promenade.metro-map-0.17.3.pmplugin",
+          "sha256": "7b06d890650bcf0dc1109522b58974d383fe902ae496c79039083572604e5b2b",
+          "bytes": 303072,
+          "released": "2026-09-06",
+          "changelog": "Fixed a flicker on Animate flow for a line's first/last (dashed) edge: the static 8 4 dash pattern and the flow pulse's own independent travelling dash beat against each other on the same path. The base line now draws solid whenever Animate flow is on."
+        },
+        {
+          "version": "0.17.4",
+          "url": "packages/run.promenade.metro-map-0.17.4.pmplugin",
+          "sha256": "6f5e3455a540abd631cf7039198f61f9ec83156bd4dfef49e87ac3f14f624698",
+          "bytes": 303384,
+          "released": "2026-09-07",
+          "changelog": "Corrected 0.17.2's detail-slider default: it meant 50% of the slider's own numeric scale, not 50% of arcs actually shown, which for unevenly-sized object types could show far less than half the graph. The seed now searches for whichever slider position first brings the combined arc count to about half of every arc in the graph (e.g. 70 arcs total -> shows ~35), regardless of how many object types there are or how unevenly sized they are."
+        },
+        {
+          "version": "0.17.5",
+          "url": "packages/run.promenade.metro-map-0.17.5.pmplugin",
+          "sha256": "8909651c5207ab8022c05add29993312d1eec719a49194d666c34d1a7032bb17",
+          "bytes": 303601,
+          "released": "2026-09-07",
+          "changelog": "The OC-DFG N% shown readout was frequency-weighted, not a plain arc count, so it could read e.g. 85% shown next to 8/22 arcs. pct is now a plain shown/total arc count, matching the X/Y arcs readout right next to it and matching 0.17.4's own seed target."
+        },
+        {
+          "version": "0.17.6",
+          "url": "packages/run.promenade.metro-map-0.17.6.pmplugin",
+          "sha256": "9ae88307d63acc4d9965be9122a372c89e2449179beea16050d5e6bf5ea1046c",
+          "bytes": 306606,
+          "released": "2026-09-10",
+          "changelog": "Refined drawing geometry without changing activity ranks or the frequency tie-break: short unbranched source tails now align to their arrival ports when clearance permits, removing unnecessary sparse-view bends, and obstructed interior vertical runs detour around actual node footprints and sink captions while gateway branches stay separate up to the marker. Per-corner chamfer limits remove overlapping diagonal sections without flattening every corner. Added a Logistics fixture and checks at 14/77 and 38/77 in both station styles, with stability on/off."
+        },
+        {
+          "version": "0.18.0",
+          "url": "packages/run.promenade.metro-map-0.18.0.pmplugin",
+          "sha256": "bb575bcc4a4e37e45fd1b6ac9cb2b48a6947e6eb4372782c490740844c4369af",
+          "bytes": 310619,
+          "released": "2026-09-17",
+          "changelog": "The two long waits are no longer a blank screen. Discovery now opens its panel immediately (the view opts into the host's run-bound live preview) and both that wait and the layout pass for a large map show an animated Budapest metro schematic, with trains running station to station, plus the run's own progress. The top-bar indicator gains a Cancel button. The animation is compositor-driven CSS on transform/opacity, so it keeps moving while the layout pass blocks the main thread. Also fixes a latent race in receiving saved view settings: host handlers are now registered before the handshake, not from a React effect."
+        },
+        {
+          "version": "0.18.1",
+          "url": "packages/run.promenade.metro-map-0.18.1.pmplugin",
+          "sha256": "2534834c9c92d592a2831da4f4421878caac36aafb6744820c587ee713c6efd1",
+          "bytes": 312126,
+          "released": "2026-09-17",
+          "changelog": "The long wait before a large map appears is 30-40x shorter: Order Management (18 activities, 105 arcs, station captions on) took about 2.9 s of blocked main thread to lay out and now takes about 70 ms. Profiling put essentially all of it in the drawing refinement's overlap verifier, which compared every pair of segments in the drawing and asked the \"same metro line?\" predicate before any cheap geometric test. It now scans only segments whose lines can coincide, asks that predicate last and memoised, answers a proposal with only the overlaps that touch what it moved, reuses one scratch copy of the drawing instead of cloning it per proposal, and skips node boxes a polyline cannot reach; the re-layout's transpose pass carries its crossing count forward. No pixel moves: the full drawing hashes identically across four real maps x two station styles x four detail levels x stability on/off, and the invariant check's own output over its 27 graphs is byte-for-byte unchanged."
+        },
+        {
+          "version": "0.18.2",
+          "url": "packages/run.promenade.metro-map-0.18.2.pmplugin",
+          "sha256": "86d4b3c156ed1655d6e43b6f426ded547239e2362dba98f0cf8fc488e3360679",
+          "bytes": 312261,
+          "released": "2026-09-17",
+          "changelog": "The standby screen no longer labels its three interchanges. The names were legible, but they were the one thing on that screen that could be read as the map being computed. The larger interchange rings stay, which keeps the Budapest shape recognisable without naming anything."
+        },
+        {
+          "version": "0.19.0",
+          "url": "packages/run.promenade.metro-map-0.19.0.pmplugin",
+          "sha256": "31a7bacc343e74d8cbdd49a06f0eb8f243959f00210babe041f087c085a635e3",
+          "bytes": 313206,
+          "released": "2026-09-18",
+          "changelog": "The view-side layout — re-laying out the filtered subgraph, track allocation, routing and the drawn-geometry refinement — is now a shared `metro-layout` package rather than code copied into the Variant Metro plugin, and both plugins run and gate on its one invariant suite. This plugin's own drawing is unchanged by the move. Separately: an object type's start marker now sits one rank above the activity it feeds whatever the stability setting. The ranking only ever pushed nodes down from a floor, so a node with no predecessor never moved; with \"Preserve layout stability\" off that floor is one shared value per component, and every start marker collapsed onto the top row. Markers are annotations, not process steps, so they are now placed from the visible topology alone. Stability-on output is unchanged byte for byte, and the three drawn overlaps 0.17.6 had to baseline are gone, so that allowance was removed."
+        },
+        {
+          "version": "0.19.1",
+          "url": "packages/run.promenade.metro-map-0.19.1.pmplugin",
+          "sha256": "c65da517e65c986a026f02e4803c39f1d4a89ab8f68b53207ac25045ff5a68d6",
+          "bytes": 313370,
+          "released": "2026-09-18",
+          "changelog": "Incoming join-gateway branches now retain separate allocated tracks through a vertical final approach and stop just above the diamond's bounding box, instead of converging into overlapping slanted arrowheads. Split gateways continue to fan out from the marker. Regression coverage asserts distinct vertical arrivals at the gateway's top bound."
+        },
+        {
+          "version": "0.19.2",
+          "url": "packages/run.promenade.metro-map-0.19.2.pmplugin",
+          "sha256": "cd0df7f8cb41d026a29cedf1ea0927cdfe82b8cf2ef41b99a3b2309c1b410c0a",
+          "bytes": 313601,
+          "released": "2026-09-18",
+          "changelog": "Join diamonds now sit at the midpoint of their incoming track span, and the outgoing branch starts from that same adjusted center. The shared regression covers an asymmetric two-in/one-out gateway and asserts both relationships."
+        },
+        {
+          "version": "0.19.3",
+          "url": "packages/run.promenade.metro-map-0.19.3.pmplugin",
+          "sha256": "f944504a1ee020c747e763e8abb31da2178e7423012434ed72aede1102d7eeca",
+          "bytes": 313779,
+          "released": "2026-09-18",
+          "changelog": "A centered join's single outgoing branch now stays on the diamond's final centerline for its whole initial vertical run, removing the S-shaped hook caused by briefly reconnecting to the old pre-centering lane."
+        },
+        {
+          "version": "0.19.4",
+          "url": "packages/run.promenade.metro-map-0.19.4.pmplugin",
+          "sha256": "c36d8fc9281510803fe55cb1cd0248d2bad79c7c4cdad3f6075b12c4828db890",
+          "bytes": 314146,
+          "released": "2026-09-18",
+          "changelog": "Sink markers now center under the edges that actually target them after final track allocation. Alignment uses graph endpoint identity rather than coincident column/rank geometry and retains marker, caption, and unrelated-route clearance."
+        },
+        {
+          "version": "0.19.5",
+          "url": "packages/run.promenade.metro-map-0.19.5.pmplugin",
+          "sha256": "90aff9720bdc6dcbe67e67f6afd6625170d10ea56e1e0ca328723ef10d694839",
+          "bytes": 315263
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.metro-station",
+      "name": "Metro Station",
+      "description": "The metro-map metaphor taken into the third dimension, the way a station atlas draws Shinjuku: activities are circular platforms, object types are colored routes, horizontal position is process order — and vertical position is accumulated elapsed time. A wait is therefore a literal descent, drawn as a translucent elevator shaft for a long one and a staircase for a short one, so the two-day gap before payment is a two-story drop rather than a number on an arc. Depth is a genuinely new axis rather than a second encoding of object type, which is why color stays free to mean what it means everywhere else in Promenade. Interactive: orbit it, flatten it back to an ordinary 2D metro map, and switch the depth axis between linear and logarithmic. Rendered with three.js WebGPURenderer, falling back to WebGL 2.",
+      "runtime": "wasm + view",
+      "authors": [
+        {
+          "name": "István Koren",
+          "email": "korenistvan@inf.elte.hu",
+          "affiliation": "ELTE University Budapest, Data Science and Engineering",
+          "orcid": "0000-0003-1350-6732"
+        }
+      ],
+      "homepage": "https://github.com/promenade-lab/metro-station",
+      "keywords": [
+        "object-centric",
+        "metro-map",
+        "schematic",
+        "waiting-time",
+        "bottleneck",
+        "3d",
+        "webgpu",
+        "rust",
+        "visual-analytics",
+        "view"
+      ],
+      "provides": [
+        "OCStationMap"
+      ],
+      "renders": [
+        "OCStationMap"
+      ],
+      "accepts": [
+        "ObjectCentricEventLog"
+      ],
+      "consumes": [
+        "OCStationMap",
+        "ObjectCentricEventLog"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.metro-station.discover",
+          "label": "Discover station map",
+          "description": "Builds the station plan from an OC-DFG mined internally from the log: ranks give horizontal order, the longest path in seconds gives depth, and an orthogonal router allocates every route a track in its corridor so no two routes are ever drawn on the same line. Highly abstracted variants are the intended use — a station atlas of sixty platforms is not an atlas.",
+          "inputs": [
+            "ObjectCentricEventLog"
+          ],
+          "outputs": [
+            "OCStationMap"
+          ],
+          "runtime": "wasm"
+        }
+      ],
+      "experimental": true,
+      "versions": [
+        {
+          "version": "0.2.0",
+          "url": "packages/run.promenade.metro-station-0.2.0.pmplugin",
+          "sha256": "76f83cd8617f86ab93206e37203b2f8d8f013b6e4825c10f7fb25bdb0088363f",
+          "bytes": 561309,
+          "released": "2026-09-06",
+          "changelog": "Lift cars. Each shaft now runs a car — instanced primitives, one passenger per object type on that hand-off, in that type’s own color. A car only ever descends, at constant speed so a longer wait is a visibly longer journey, and then beams back to the top with a flash rather than climbing: height here is elapsed time, so a rising car would be a case travelling backwards through the process. Shafts gained a minimum radius (set in the kernel, where the clearance invariants can see it), a machine room, a pit and a hoist cable. Also fixes two layout defects the invariants caught: column pitch is now per-column instead of one global maximum, and the corridor allocator centers each group of overlapping claims rather than a whole corridor. wasm change: Remove+reinstall."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.net-reduce",
+      "name": "Petri Net Reduction",
+      "description": "Removes the scaffolding from an accepting Petri net without changing what it does. A converted or discovered net carries a place per sequence flow and a silent transition per gateway — structure the construction needed and the process does not. Reduction fuses it away, and the promise is exact: the reduced net produces the same sequences of activities, and accepts the same ones. That is checked on every build by enumerating both nets' languages with the play-out plugin.",
+      "runtime": "wasm",
+      "authors": [
+        {
+          "name": "István Koren",
+          "email": "korenistvan@inf.elte.hu",
+          "affiliation": "ELTE University Budapest, Data Science and Engineering",
+          "orcid": "0000-0003-1350-6732"
+        }
+      ],
+      "citation": {
+        "text": "Murata, T. (1989). Petri nets: properties, analysis and applications. Proceedings of the IEEE 77(4), 541-580 — the six classical reduction rules are §5. Berthelot, G. (1986), Transformations and decompositions of nets, Advances in Petri Nets, LNCS 254, 359-376, is the reference for behaviour-preserving transformation; implicit places follow Colom, J.M. and Silva, M. (1990), Improving the linearly based characterization of P/T nets.",
+        "doi": "10.1109/5.24143",
+        "bibtex": "@article{murata1989petri,\n  title   = {Petri Nets: Properties, Analysis and Applications},\n  author  = {Murata, Tadao},\n  journal = {Proceedings of the IEEE},\n  volume  = {77}, number = {4}, pages = {541--580}, year = {1989},\n  doi     = {10.1109/5.24143}\n}"
+      },
+      "keywords": [
+        "petri-net",
+        "reduction",
+        "simplification",
+        "murata",
+        "implicit-places",
+        "silent-transitions",
+        "rust"
+      ],
+      "provides": [
+        "AcceptingPetriNet"
+      ],
+      "accepts": [
+        "AcceptingPetriNet"
+      ],
+      "consumes": [
+        "AcceptingPetriNet"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.net-reduce.reduce",
+          "label": "Reduce net",
+          "description": "Applies the classical structural reductions — fusion of series and parallel places and transitions, elimination of self-loop places, removal of redundant places — to a fixpoint, keeping only the ones that preserve the net's language. Every visible activity survives; only silent scaffolding and redundant places go. The result is an ordinary Accepting Petri Net: it renders, replays, aligns and plays out like any other.",
+          "inputs": [
+            "AcceptingPetriNet"
+          ],
+          "outputs": [
+            "AcceptingPetriNet"
+          ],
+          "runtime": "wasm"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.1.0",
+          "url": "packages/run.promenade.net-reduce-0.1.0.pmplugin",
+          "sha256": "70ad1578d1593ed0a869f5736f4e564761e032e9de64ecfdbf372337db6eaf48",
+          "bytes": 67884
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.object-dynamics",
+      "name": "Object Dynamics",
+      "description": "A family of independent object-centric exploration views over an OCEL 2.0 log: Multiplicity, Type Signatures, Lifecycle Repetition, Activity Timing, Attribute History, Attribute Distribution, plus an optional Overview. Each opens as its own dockable panel — there is no shared tabbed shell — and every aggregation runs as SQL against the log's own relational tables, never materialised wholesale into the browser.",
+      "runtime": "view",
+      "authors": [
+        {
+          "name": "István Koren",
+          "email": "korenistvan@inf.elte.hu",
+          "affiliation": "ELTE University Budapest, Data Science and Engineering",
+          "orcid": "0000-0003-1350-6732"
+        }
+      ],
+      "keywords": [
+        "object-centric",
+        "ocel",
+        "multiplicity",
+        "type-signatures",
+        "lifecycle",
+        "repetition",
+        "timing",
+        "attribute-history",
+        "attribute-distribution",
+        "view"
+      ],
+      "renders": [
+        "ObjectCentricEventLog"
+      ],
+      "consumes": [
+        "ObjectCentricEventLog"
+      ],
+      "versions": [
+        {
+          "version": "0.1.3",
+          "url": "packages/run.promenade.object-dynamics-0.1.3.pmplugin",
+          "sha256": "7d9a2080d74b766d066a8d89f55d4d997120457e27800ae195ea5c2e922395bf",
+          "bytes": 502578,
+          "changelog": "A family of independent object-centric exploration views over an OCEL 2.0 log — Multiplicity, Type Signatures, Lifecycle Repetition, Activity Timing, Attribute History, Attribute Distribution and an Overview. Each opens as its own panel, and every aggregation runs as SQL against the log's own tables."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.ocdfg-backbone-layout",
+      "name": "OC-DFG Backbone Layout (IP)",
+      "description": "Lays out an Object-Centric Directly-Follows Graph with the backbone-based method of Lee, Song and van der Aalst: each object type gets its own vertical axis with its most frequent path drawn as a straight trunk, and node ranks come from an integer program that minimises upward edges instead of a heuristic. Solved in the browser by HiGHS through scipy.optimize.milp. Produces a positioned layout artifact, reports the layout-quality metrics both papers evaluate against, and can be switched back to the heuristic baseline for comparison.",
+      "runtime": "pyodide + view",
+      "authors": [
+        {
+          "name": "István Koren",
+          "email": "korenistvan@inf.elte.hu",
+          "affiliation": "ELTE University Budapest, Data Science and Engineering",
+          "orcid": "0000-0003-1350-6732"
+        }
+      ],
+      "citation": {
+        "text": "Method: D. Lee, M. Song, W.M.P. van der Aalst, \"Layouting Object-Centric Directly Follows Graphs\", BPM 2025, LNBIP 564, pp. 204-220; and D. Lee, M. Song, W.M.P. van der Aalst, \"An optimized backbone-based process layout generation method using integer programming and heuristics to enhance user comprehension\", Data & Knowledge Engineering 164 (2026) 102601. This plugin is an independent implementation, not by the method's authors.",
+        "doi": "10.1016/j.datak.2026.102601",
+        "url": "https://doi.org/10.1016/j.datak.2026.102601"
+      },
+      "keywords": [
+        "object-centric",
+        "ocdfg",
+        "layout",
+        "backbone",
+        "integer-programming",
+        "visualization",
+        "sugiyama",
+        "milp"
+      ],
+      "provides": [
+        "OCDFGBackboneLayout"
+      ],
+      "renders": [
+        "OCDFGBackboneLayout"
+      ],
+      "accepts": [
+        "OCDFG"
+      ],
+      "consumes": [
+        "OCDFGBackboneLayout",
+        "OCDFG"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.ocdfg-backbone-layout.layout",
+          "label": "Backbone layout (IP)",
+          "description": "Computes backbone-based coordinates for an OC-DFG: one axis per object type, per-type backbones held straight, node ranks from an integer program that minimises precedence violations, and component placement balanced by a second integer program.",
+          "inputs": [
+            "OCDFG"
+          ],
+          "outputs": [
+            "OCDFGBackboneLayout"
+          ],
+          "runtime": "pyodide"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.1.0",
+          "url": "packages/run.promenade.ocdfg-backbone-layout-0.1.0.pmplugin",
+          "sha256": "f511e9afd6cbe3c40f9919fb8b2fc091c402c0c685c8eab1dbbabb9decb51314",
+          "bytes": 174520,
+          "changelog": "First release: the backbone-based OC-DFG layout of Lee, Song and van der Aalst (BPM 2025; DKE 164, 2026). Per-type backbones, integer-programming rank assignment and component balancing, axis-restricted crossing minimisation, and node positioning that holds each type's trunk straight."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.ocdfg-flow-view",
+      "name": "OC-DFG Viewer",
+      "description": "An interactive Object-Centric DFG renderer using React Flow and the same tuned ELK layered preset as the OCPN React Flow view. Object types are shown as colored parallel flows and can be toggled in the in-canvas legend.",
+      "runtime": "view",
+      "authors": [
+        {
+          "name": "István Koren",
+          "email": "korenistvan@inf.elte.hu",
+          "affiliation": "ELTE University Budapest, Data Science and Engineering",
+          "orcid": "0000-0003-1350-6732"
+        }
+      ],
+      "keywords": [
+        "object-centric",
+        "dfg",
+        "react-flow",
+        "elkjs",
+        "layout",
+        "view"
+      ],
+      "renders": [
+        "OCDFG"
+      ],
+      "consumes": [
+        "OCDFG"
+      ],
+      "versions": [
+        {
+          "version": "0.1.10",
+          "url": "packages/run.promenade.ocdfg-flow-view-0.1.10.pmplugin",
+          "sha256": "01a281d000b38c9b342cb5660b2faad72e882f20c274424976e9f8eea126b876",
+          "bytes": 579923,
+          "released": "2026-08-29",
+          "changelog": "\"Export as figure…\" now fits the whole diagram into view before capturing, instead of exporting whatever was panned/zoomed into the visible viewport, then restores the user's own view afterwards."
+        },
+        {
+          "version": "0.1.11",
+          "url": "packages/run.promenade.ocdfg-flow-view-0.1.11.pmplugin",
+          "sha256": "ad00a05de1c46173c34dc16fcd8238c912de342e2eec34893f5c0f2624349e6b",
+          "bytes": 580042,
+          "released": "2026-09-16",
+          "changelog": "Drops \"(React Flow)\" from the view label and the package name: the renderer it distinguished this from is long disabled, so the qualifier no longer distinguished anything."
+        },
+        {
+          "version": "0.2.0",
+          "url": "packages/run.promenade.ocdfg-flow-view-0.2.0.pmplugin",
+          "sha256": "93922b86360fe9b1fe086339804ea3a6b89d80875317c01eb186924bb4d13744",
+          "bytes": 581026,
+          "released": "2026-09-18",
+          "changelog": "Adds a \"Flow direction\" view parameter: the diagram can now run top to bottom as well as left to right, with start/end markers keeping their label clear of the flow either way."
+        },
+        {
+          "version": "0.2.1",
+          "url": "packages/run.promenade.ocdfg-flow-view-0.2.1.pmplugin",
+          "sha256": "03a8887bb9fe10b594c5d3583527b118f24f08421dcc7201f3c76ac31bf8560f",
+          "bytes": 581500,
+          "released": "2026-09-18",
+          "changelog": "Fixes the missing arrowhead on every arc that closes a loop: a back link came back from the layout engine with a zero-length end tangent, which collapsed its arrowhead to an invisible point."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.ocdfg-pm4py",
+      "name": "OC-DFG Discovery (pm4py)",
+      "description": "A second discovery backend for the Object-Centric Directly-Follows Graph: pm4py's pm4py.discover_ocdfg, run in Pyodide directly on an OCEL log. Produces the same OCDFG artifact as Promenade's SQL discovery, so either installed OC-DFG renderer can display it.",
+      "runtime": "pyodide",
+      "authors": [
+        {
+          "name": "Promenade Team"
+        }
+      ],
+      "keywords": [
+        "discovery",
+        "object-centric",
+        "dfg",
+        "ocel",
+        "pm4py",
+        "python"
+      ],
+      "provides": [
+        "OCDFG"
+      ],
+      "accepts": [
+        "ObjectCentricEventLog"
+      ],
+      "consumes": [
+        "ObjectCentricEventLog"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.ocdfg-pm4py.discover",
+          "label": "Discover OC-DFG (pm4py)",
+          "inputs": [
+            "ObjectCentricEventLog"
+          ],
+          "outputs": [
+            "OCDFG"
+          ],
+          "runtime": "pyodide"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.1.0",
+          "url": "packages/run.promenade.ocdfg-pm4py-0.1.0.pmplugin",
+          "sha256": "34861e293668515020ecba52c1394a2d7e673fd8f4c60464d9066b278913d462",
+          "bytes": 4590,
+          "released": "2026-08-19",
+          "changelog": "Initial release: discovers an OC-DFG with `pm4py.discover_ocdfg` in Pyodide, producing the same artifact type as Promenade's built-in SQL backend."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.ocel-builder",
+      "name": "OCEL Builder",
+      "description": "Writes an OCEL 2.0 log by hand, schema first, and edits existing ones. Declare the event types and object types with their typed attributes (string / integer / float / boolean / time); each type gets its own tab — only its rows, only its own columns, no unavailable cells — with Excel-style editing: keyboard navigation, a fill handle, clipboard paste, autocomplete on every id, type and qualifier. Object attributes may be static or time-dependent, with a Changes tab recording the values an attribute took and when. A \"+ relation\" button on every Events/Objects row opens a small dialog to link an existing object or create one on the spot, without leaving the row for the E2O/O2O sheet. “Edit log” opens an existing OCEL 2.0 log the same way, with per-sheet search and paging, and publishes the result as a new artifact that records the log it came from. Everything is validated as you type, with one-click repairs, and every issue points at the exact row and tab it is about.",
+      "runtime": "view",
+      "authors": [
+        {
+          "name": "István Koren",
+          "email": "korenistvan@inf.elte.hu",
+          "affiliation": "ELTE University Budapest, Data Science and Engineering",
+          "orcid": "0000-0003-1350-6732"
+        }
+      ],
+      "keywords": [
+        "ocel",
+        "authoring",
+        "editor",
+        "spreadsheet",
+        "schema",
+        "object-centric",
+        "event-log"
+      ],
+      "renders": [
+        "ObjectCentricEventLog"
+      ],
+      "consumes": [
+        "ObjectCentricEventLog"
+      ],
+      "versions": [
+        {
+          "version": "0.4.0",
+          "url": "packages/run.promenade.ocel-builder-0.4.0.pmplugin",
+          "sha256": "a04449fe85e2bfb2cc2793ec73e6029cb84ef52ff35a8b2707446584d55fceca",
+          "bytes": 85951,
+          "released": "2026-09-03",
+          "changelog": "No more “All” tab: Events/Objects show one tab per declared type (only its rows, only its columns) plus “Other” for anything undeclared. A “+ relation” button on every row opens a dialog to link or create an object without leaving for the E2O/O2O sheet. Every validation issue now points at the exact row(s) it's about, so “Go” and each tab's error dot land precisely — no All tab needed to find a problem."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.ocel-cases-variants",
+      "name": "Cases & Variants (OCEL)",
+      "description": "The object-centric analog of the traditional \"Cases & variants\" view. Cases become process executions (Adams, Schuster, Schmitz, Schuh & van der Aalst, \"Defining Cases and Variants for Object-Centric Event Data\", arXiv:2208.03235): connected subgraphs of the object co-occurrence graph, extracted either by connected components or by a chosen leading object type. Variants become equivalence classes of process executions under activity-labeled graph isomorphism (Weisfeiler-Lehman canonical hashing, then exact verification within each hash bucket), visualized as a per-object swimlane diagram. It can publish their typed, source-bound execution partition for downstream views.",
+      "runtime": "view",
+      "authors": [
+        {
+          "name": "István Koren",
+          "email": "korenistvan@inf.elte.hu",
+          "affiliation": "ELTE University Budapest, Data Science and Engineering",
+          "orcid": "0000-0003-1350-6732"
+        }
+      ],
+      "citation": {
+        "text": "J. N. Adams, D. Schuster, S. Schmitz, G. Schuh, W. M. P. van der Aalst, \"Defining Cases and Variants for Object-Centric Event Data,\" arXiv:2208.03235, 2022.",
+        "url": "https://arxiv.org/abs/2208.03235"
+      },
+      "keywords": [
+        "object-centric",
+        "ocel",
+        "cases",
+        "variants",
+        "process-executions",
+        "graph-isomorphism",
+        "view"
+      ],
+      "renders": [
+        "ObjectCentricEventLog"
+      ],
+      "consumes": [
+        "ObjectCentricEventLog"
+      ],
+      "versions": [
+        {
+          "version": "0.6.4",
+          "url": "packages/run.promenade.ocel-cases-variants-0.6.4.pmplugin",
+          "sha256": "ff5c1cfad9285f9d7bca32450aee33f043dc6947b82b71b2be7adcacc3df8635",
+          "bytes": 85430,
+          "released": "2026-08-27",
+          "changelog": "Publishes a validated ObjectCentricExecutionPartition with Adams-style extraction settings, execution and variant memberships, and source OCEL provenance. It stores identifiers rather than duplicate OCEL rows, and fails visibly above the current 8 MiB inline-artifact limit."
+        },
+        {
+          "version": "0.7.0",
+          "url": "packages/run.promenade.ocel-cases-variants-0.7.0.pmplugin",
+          "sha256": "66b87d57cd45f5059aee9ea2289f7daf20fb29ae12b17e8ab0bac261578b23c7",
+          "bytes": 88332,
+          "released": "2026-09-18",
+          "changelog": "Opening this view on the Logistics log ran ~88 seconds of uninterrupted JavaScript, long enough for the browser to offer to kill the page. Profiling put ~79 of those seconds in the isomorphism verification, which compared graphs through string keys and re-indexed both sides on every one of ~10,000 comparisons; nodes are now integers, labels interned, adjacency a dense Int32Array, and each graph prepared once. That stage went ~79s -> ~1.8s, with a byte-identical variant partition. The remaining work is driven in ~12ms slices (generators, not a Worker — the sandboxed frame's CSP blocks those), so the tab stays responsive, a real per-execution progress bar is shown, and the extraction can be canceled."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.ocel-olap",
+      "name": "Object-Centric OLAP",
+      "description": "The four multi-dimensional operations on an object-centric event log: drill down and roll up along the object-type dimension, unfold and fold along the event-type dimension. Each produces a new OCEL — the same log seen at a different granularity — so every discovery, view and metric in the workspace can be run again on it and the two compared. This is how an object-centric log is analysed the way a cube is: not by filtering it down, but by changing what counts as a type.",
+      "runtime": "relational",
+      "authors": [
+        {
+          "name": "István Koren",
+          "email": "korenistvan@inf.elte.hu",
+          "affiliation": "ELTE University Budapest, Data Science and Engineering",
+          "orcid": "0000-0003-1350-6732"
+        }
+      ],
+      "citation": {
+        "text": "Khayatbashi, S., Miri, N. and Jalali, A. (2025). Advancing Object-Centric Process Mining with Multi-Dimensional Data Operations. CAiSE Forum 2025 (arXiv:2412.00393). The four operations — drill down, roll up, unfold, fold — are the paper's, implemented as relational programs over the host's OCEL schema.",
+        "doi": "10.48550/arXiv.2412.00393",
+        "bibtex": "@inproceedings{khayatbashi2025olap,\n  title     = {Advancing Object-Centric Process Mining with Multi-Dimensional Data Operations},\n  author    = {Khayatbashi, Shahrzad and Miri, Najmeh and Jalali, Amin},\n  booktitle = {CAiSE Forum},\n  year      = {2025},\n  doi       = {10.48550/arXiv.2412.00393}\n}"
+      },
+      "keywords": [
+        "ocel",
+        "object-centric",
+        "olap",
+        "drill-down",
+        "roll-up",
+        "unfold",
+        "fold",
+        "sql"
+      ],
+      "provides": [
+        "ObjectCentricEventLog"
+      ],
+      "accepts": [
+        "ObjectCentricEventLog"
+      ],
+      "consumes": [
+        "ObjectCentricEventLog"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.ocel-olap.drill-down",
+          "label": "Drill down an object type",
+          "description": "Splits one object type into finer sub-types named after an attribute's values: Order becomes (Order, gold) and (Order, standard). Objects whose attribute has no value keep the parent type, so nothing is placed in a category the data never claimed — and rolling up afterwards gives back exactly the log you started from.",
+          "inputs": [
+            "ObjectCentricEventLog"
+          ],
+          "outputs": [
+            "ObjectCentricEventLog"
+          ],
+          "runtime": "relational"
+        },
+        {
+          "id": "run.promenade.ocel-olap.roll-up",
+          "label": "Roll up an object type",
+          "description": "Collapses the sub-types of one object type back into it: (Order, gold) and (Order, standard) become Order again. The inverse of drilling down, and inverse exactly — a drilled log rolled up on the same type is the log it was drilled from.",
+          "inputs": [
+            "ObjectCentricEventLog"
+          ],
+          "outputs": [
+            "ObjectCentricEventLog"
+          ],
+          "runtime": "relational"
+        },
+        {
+          "id": "run.promenade.ocel-olap.unfold",
+          "label": "Unfold an event type",
+          "description": "Splits one activity by the kind of object it touches: “pay” performed on a Customer becomes (pay, Customer), while the same activity with no such object keeps its name. That separation is what stops a model from merging two genuinely different pieces of work into one node.",
+          "inputs": [
+            "ObjectCentricEventLog"
+          ],
+          "outputs": [
+            "ObjectCentricEventLog"
+          ],
+          "runtime": "relational"
+        },
+        {
+          "id": "run.promenade.ocel-olap.fold",
+          "label": "Fold an event type",
+          "description": "Collapses the unfolded variants of one activity back into it: (pay, Customer) and (pay, Supplier) become pay again. The inverse of unfolding, and inverse exactly.",
+          "inputs": [
+            "ObjectCentricEventLog"
+          ],
+          "outputs": [
+            "ObjectCentricEventLog"
+          ],
+          "runtime": "relational"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.1.0",
+          "url": "packages/run.promenade.ocel-olap-0.1.0.pmplugin",
+          "sha256": "593365d3b029301804a067f2c6d99d87ce5bfe84c1375cdfdbe4db6662cfc5cd",
+          "bytes": 11542
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.ocelot",
+      "name": "OCEL 2.0 Inspector",
+      "description": "Ocelot (rwth-pads/ocelot) ported into an OCEL 2.0 inspector: an object-type / event-type relationship graph, paginated Objects and Events tables with a per-object lifecycle and relations explorer, and a cleaned-up OCEL overview standing in for the core one. Every table pages real LIMIT/OFFSET SQL — nothing is loaded into the browser wholesale. Ships installed by default.",
+      "runtime": "view",
+      "authors": [
+        {
+          "name": "István Koren",
+          "email": "korenistvan@inf.elte.hu",
+          "affiliation": "ELTE University Budapest, Data Science and Engineering",
+          "orcid": "0000-0003-1350-6732"
+        }
+      ],
+      "keywords": [
+        "object-centric",
+        "ocel",
+        "objects",
+        "events",
+        "graph",
+        "react-flow",
+        "elkjs",
+        "view"
+      ],
+      "renders": [
+        "ObjectCentricEventLog"
+      ],
+      "consumes": [
+        "ObjectCentricEventLog"
+      ],
+      "versions": [
+        {
+          "version": "0.2.6",
+          "url": "packages/run.promenade.ocelot-0.2.6.pmplugin",
+          "sha256": "c03c852d4e6d291091dcada7c3f633a27f4f7d7498f7c08b08af287435c19b73",
+          "bytes": 1425869,
+          "released": "2026-09-05",
+          "changelog": "Events' \"Object Relationships\" chips now open the clicked object in the Objects view (already open? it redirects instead of just focusing stale content) — matching what Object-to-Object chips already did within the Objects view itself."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.ocim",
+      "name": "Object-Centric Inductive Miner",
+      "description": "Niklas van Detten's Object-Centric Inductive Miner in Rust. Discovers a typed, block-structured object-centric process tree directly from an OCEL, then converts that tree to an object-centric Petri net.",
+      "runtime": "relational + wasm + view",
+      "authors": [
+        {
+          "name": "Promenade Team"
+        }
+      ],
+      "citation": {
+        "text": "van Detten, N. Object-Centric Inductive Miner.",
+        "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5668513"
+      },
+      "keywords": [
+        "discovery",
+        "object-centric",
+        "ocel",
+        "process-tree",
+        "petri-net",
+        "rust"
+      ],
+      "provides": [
+        "ObjectCentricProcessTree",
+        "ObjectCentricPetriNet"
+      ],
+      "renders": [
+        "ObjectCentricProcessTree"
+      ],
+      "accepts": [
+        "ObjectCentricEventLog",
+        "ObjectCentricProcessTree"
+      ],
+      "consumes": [
+        "ObjectCentricProcessTree",
+        "ObjectCentricEventLog"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.ocim.project",
+          "label": "Project for Object-Centric Inductive Miner",
+          "inputs": [
+            "ObjectCentricEventLog"
+          ],
+          "outputs": [
+            "TraditionalEventLog"
+          ],
+          "runtime": "relational",
+          "internal": true
+        },
+        {
+          "id": "run.promenade.ocim.discover",
+          "label": "Discover Object-Centric Process Tree",
+          "inputs": [
+            "ObjectCentricEventLog"
+          ],
+          "outputs": [
+            "ObjectCentricProcessTree"
+          ],
+          "runtime": "wasm"
+        },
+        {
+          "id": "run.promenade.ocim.to-ocpn",
+          "label": "Object-Centric Process Tree → Object-Centric Petri Net",
+          "inputs": [
+            "ObjectCentricProcessTree"
+          ],
+          "outputs": [
+            "ObjectCentricPetriNet"
+          ],
+          "runtime": "wasm"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.1.10",
+          "url": "packages/run.promenade.ocim-0.1.10.pmplugin",
+          "sha256": "4d1b708810841308806a4ebb2ef52419905b3f8c579e19befa8b97ba44c3e154",
+          "bytes": 263151,
+          "released": "2026-08-29",
+          "changelog": "\"Export as figure…\" now fits the whole tree into view before capturing, instead of exporting whatever was panned/zoomed into the visible viewport, then restores the user's own view afterwards."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.ocpn",
+      "name": "Object-Centric Petri Net Discovery",
+      "description": "Discovers an Object-Centric Petri Net from an OCEL 2.0 log: per selected object type, project the log, mine a process tree with Inductive Miner, convert it to a Petri net, then merge every object type's net by shared activity. One click, directly on the OCEL log — the projection this needs runs transparently as an internal stage. No core-only shortcut, installable like any other package.",
+      "runtime": "relational + wasm + view",
+      "authors": [
+        {
+          "name": "Promenade Team"
+        }
+      ],
+      "citation": {
+        "text": "van der Aalst, W.M.P., Berti, A. (2020). Discovering Object-centric Petri Nets. Fundamenta Informaticae, 175(1-4), 1-40.",
+        "doi": "10.3233/FI-2020-1946"
+      },
+      "keywords": [
+        "discovery",
+        "object-centric",
+        "petri-net",
+        "ocel",
+        "rust"
+      ],
+      "provides": [
+        "ObjectCentricPetriNet"
+      ],
+      "accepts": [
+        "ObjectCentricEventLog"
+      ],
+      "consumes": [
+        "ObjectCentricPetriNet",
+        "ObjectCentricEventLog"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.ocpn.project",
+          "label": "Project for OCPN discovery",
+          "inputs": [
+            "ObjectCentricEventLog"
+          ],
+          "outputs": [
+            "TraditionalEventLog"
+          ],
+          "runtime": "relational",
+          "internal": true
+        },
+        {
+          "id": "run.promenade.ocpn.discover",
+          "label": "Discover OCPN (Rust)",
+          "inputs": [
+            "ObjectCentricEventLog"
+          ],
+          "outputs": [
+            "ObjectCentricPetriNet"
+          ],
+          "runtime": "wasm"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.2.5",
+          "url": "packages/run.promenade.ocpn-0.2.5.pmplugin",
+          "sha256": "d0af7001b610446c759a40f0a33a2b5b2d68448191fe1ce8d7d9adaf458057e7",
+          "bytes": 118980,
+          "released": "2026-08-22",
+          "changelog": "Pins Discover OCPN's hidden TraditionalEventLog prerequisite to its own Project for OCPN discovery action. This removes ambiguity when another installed plugin also provides an OCEL projection."
+        },
+        {
+          "version": "0.2.6",
+          "url": "packages/run.promenade.ocpn-0.2.6.pmplugin",
+          "sha256": "7d189d372121bbecaed94d383572f2dad1a1c3c483d5a16c328cab09c448c270",
+          "bytes": 119142,
+          "released": "2026-09-16",
+          "changelog": "The discovery action is now \"Discover OCPN (Rust)\". With the pm4py plugin installed two actions produce an Object-Centric Petri Net, and which algorithm ran is the difference that matters."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.ocpn-compare",
+      "name": "OCPN Comparison",
+      "description": "Compares two Object-Centric Petri Nets per object type. It reports τ-abstracted directly-follows and reachability footprints, shared activities, variable-arc differences, and reciprocal bounded behavioral coverage. The report makes its approximation explicit: it is not an exact token-game or identifier-aware OCPN alignment.",
+      "runtime": "pyodide + view",
+      "authors": [
+        {
+          "name": "István Koren",
+          "email": "korenistvan@inf.elte.hu",
+          "affiliation": "ELTE University Budapest, Data Science and Engineering",
+          "orcid": "0000-0003-1350-6732"
+        }
+      ],
+      "citation": {
+        "text": "The report combines behavioral-profile ideas (Weidlich, Polyvyanyy, Mendling and Weske, 2011) with OCPN-aware conformance concepts (Gianola, Montali and Winkler, 2023).",
+        "url": "https://arxiv.org/abs/2312.08537"
+      },
+      "keywords": [
+        "comparison",
+        "object-centric",
+        "petri-net",
+        "behavioral-profile",
+        "conformance"
+      ],
+      "provides": [
+        "OcpnComparison"
+      ],
+      "renders": [
+        "OcpnComparison"
+      ],
+      "accepts": [
+        "ObjectCentricPetriNet"
+      ],
+      "consumes": [
+        "OcpnComparison",
+        "ObjectCentricPetriNet"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.ocpn-compare.compare",
+          "label": "Compare OCPNs",
+          "inputs": [
+            "ObjectCentricPetriNet",
+            "ObjectCentricPetriNet"
+          ],
+          "outputs": [
+            "OcpnComparison"
+          ],
+          "runtime": "pyodide"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.1.0",
+          "url": "packages/run.promenade.ocpn-compare-0.1.0.pmplugin",
+          "sha256": "b28fd1595fabad7459e516415c5733273ef411f2fe27d694a4bad28e44435bf3",
+          "bytes": 10472,
+          "released": "2026-08-19",
+          "changelog": "Initial release: two-input τ-abstracted OCPN footprint comparison, structural and variable-arc deltas, reciprocal bounded coverage, and a sandboxed report view."
+        },
+        {
+          "version": "0.1.1",
+          "url": "packages/run.promenade.ocpn-compare-0.1.1.pmplugin",
+          "sha256": "4494d1a88f86b584a708bb35919b28f15ec5d38911ad98d2b72c0b32c3eedcdb",
+          "bytes": 10589,
+          "released": "2026-09-15",
+          "changelog": "Declares `family: \"result\"` on `OcpnComparison` — the same colour as before, now stated by the type instead of left to the default."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.ocpn-flow-view",
+      "name": "OCPN Viewer",
+      "description": "A second renderer for Object-Centric Petri Nets: React Flow for rendering, elkjs (layered algorithm, run synchronously since the sandboxed view boundary's CSP blocks Web Workers) for layout. Source places show a Play glyph, sink places a Stop glyph. Ships alongside the host's own OCPN view so the two renderers can be compared side by side.",
+      "runtime": "view",
+      "authors": [
+        {
+          "name": "István Koren",
+          "email": "korenistvan@inf.elte.hu",
+          "affiliation": "ELTE University Budapest, Data Science and Engineering",
+          "orcid": "0000-0003-1350-6732"
+        }
+      ],
+      "keywords": [
+        "object-centric",
+        "petri-net",
+        "react-flow",
+        "elkjs",
+        "layout",
+        "view"
+      ],
+      "renders": [
+        "ObjectCentricPetriNet"
+      ],
+      "consumes": [
+        "ObjectCentricPetriNet"
+      ],
+      "versions": [
+        {
+          "version": "0.2.6",
+          "url": "packages/run.promenade.ocpn-flow-view-0.2.6.pmplugin",
+          "sha256": "4d4a7f0bed559735cf7e1de01c095cbe57b37defc8aabf83745f64c82cd55f7e",
+          "bytes": 583099,
+          "released": "2026-08-29",
+          "changelog": "\"Export as figure…\" now fits the whole net into view before capturing, instead of exporting whatever was panned/zoomed into the visible viewport, then restores the user's own view afterwards."
+        },
+        {
+          "version": "0.2.7",
+          "url": "packages/run.promenade.ocpn-flow-view-0.2.7.pmplugin",
+          "sha256": "71ee229ab56a1af3ff1f114e25f2871b4d5a1e46b54bdf1086559f9acbb811a3",
+          "bytes": 583197,
+          "released": "2026-09-16",
+          "changelog": "Drops \"(React Flow)\" from the view label and the package name, for the same reason as the OC-DFG viewer."
+        },
+        {
+          "version": "0.3.0",
+          "url": "packages/run.promenade.ocpn-flow-view-0.3.0.pmplugin",
+          "sha256": "8d256d0aa98b77b237a6fdb8980f1350acc1bd0e1429939f838f2f273f8419fa",
+          "bytes": 584327,
+          "released": "2026-09-18",
+          "changelog": "Adds a \"Flow direction\" view parameter: the net can now run top to bottom as well as left to right, with source/sink place labels and silent-transition bars turning with the flow."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.ocpn-pm4py",
+      "name": "OCPN Discovery (pm4py)",
+      "description": "A second discovery backend for the same Object-Centric Petri Net artifact run.promenade.ocpn (Rust) produces: pm4py's own pm4py.discover_oc_petri_net, run in Pyodide, direct on the OCEL log (pm4py handles every selected object type itself, so no internal projection stage is needed). Renders in either installed OCPN viewer — pick this instead of \"Discover OCPN\" on the same log to compare pm4py's discovery against the Rust implementation.",
+      "runtime": "pyodide",
+      "authors": [
+        {
+          "name": "Promenade Team"
+        }
+      ],
+      "keywords": [
+        "discovery",
+        "object-centric",
+        "petri-net",
+        "ocel",
+        "pm4py",
+        "python"
+      ],
+      "provides": [
+        "ObjectCentricPetriNet"
+      ],
+      "accepts": [
+        "ObjectCentricEventLog"
+      ],
+      "consumes": [
+        "ObjectCentricEventLog"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.ocpn-pm4py.discover",
+          "label": "Discover OCPN (pm4py)",
+          "inputs": [
+            "ObjectCentricEventLog"
+          ],
+          "outputs": [
+            "ObjectCentricPetriNet"
+          ],
+          "runtime": "pyodide"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.1.0",
+          "url": "packages/run.promenade.ocpn-pm4py-0.1.0.pmplugin",
+          "sha256": "c487ca33539ee30f0564443251180bf85bc0db638b5579488d9e7c0e169f562d",
+          "bytes": 8355,
+          "released": "2026-08-18",
+          "changelog": "Initial release: discovers an Object-Centric Petri Net via `pm4py.discover_oc_petri_net` in Pyodide — the same artifact type the Rust plugin produces, so either OCPN viewer renders it. No internal projection stage; pm4py handles every object type itself."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.ocpn-replay",
+      "name": "OCEL/OCPN Replay",
+      "description": "Replays a complete timestamped OCEL against a selected Object-Centric Petri Net using a deterministic object-bound token game. Produces source-bound ObjectCentricReplayEvidence with per-event support, explicit log/silent-model moves, and replayed-event interaction fields that activate Interaction Atlas model-supported and residual panels.",
+      "runtime": "pyodide + view",
+      "authors": [
+        {
+          "name": "Promenade Team"
+        }
+      ],
+      "keywords": [
+        "conformance",
+        "replay",
+        "object-centric",
+        "ocel",
+        "ocpn",
+        "interaction-atlas"
+      ],
+      "provides": [
+        "ObjectCentricReplayEvidence"
+      ],
+      "renders": [
+        "ObjectCentricReplayEvidence"
+      ],
+      "accepts": [
+        "ObjectCentricEventLog",
+        "ObjectCentricPetriNet"
+      ],
+      "consumes": [
+        "ObjectCentricReplayEvidence",
+        "ObjectCentricEventLog",
+        "ObjectCentricPetriNet"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.ocpn-replay.replay",
+          "label": "Replay OCEL on OCPN",
+          "inputs": [
+            "ObjectCentricEventLog",
+            "ObjectCentricPetriNet"
+          ],
+          "outputs": [
+            "ObjectCentricReplayEvidence"
+          ],
+          "runtime": "pyodide"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.2.0",
+          "url": "packages/run.promenade.ocpn-replay-0.2.0.pmplugin",
+          "sha256": "f975706ce1aa67ba289cc2aee303a4b73ea569582b6220a730d4ca95e4918768",
+          "bytes": 582091,
+          "released": "2026-09-01",
+          "changelog": "Adds the Replay animation view (bundled, primary): draws the OCPN and plays the object-bound token game back step by step, live during the run and scrubbable afterwards. The evidence now carries the net, per-event timestamps, and a bounded firing trace (traceLimit param). Interaction Atlas contract fields are unchanged.",
+          "channel": "dev"
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.performance-spectrum",
+      "name": "Performance Spectrum",
+      "description": "Fine-grained performance analysis after Denisov, Fahland, and van der Aalst: each observed directly-follows flow is rendered over calendar time and colored by duration class, revealing batching, queues, slowdowns and performance drift that averages conceal. On OCELs it can consume exact Interaction Atlas lasso cohorts.",
+      "runtime": "view",
+      "authors": [
+        {
+          "name": "Promenade Team"
+        }
+      ],
+      "homepage": "https://multiprocessmining.org/2020/10/06/the-performance-spectrum/",
+      "keywords": [
+        "performance",
+        "performance-spectrum",
+        "visual-analytics",
+        "process-mining",
+        "time",
+        "view"
+      ],
+      "renders": [
+        "TraditionalEventLog",
+        "ObjectCentricEventLog"
+      ],
+      "consumes": [
+        "TraditionalEventLog",
+        "ObjectCentricEventLog"
+      ],
+      "versions": [
+        {
+          "version": "0.1.9",
+          "url": "packages/run.promenade.performance-spectrum-0.1.9.pmplugin",
+          "sha256": "698a8d3b01af98cff859d515324391499f545c0e78c0772010737efd8efad29e",
+          "bytes": 13579,
+          "released": "2026-08-28",
+          "changelog": "Opts into interaction-cohort-v1. On a shared OCEL, users can choose a published Atlas lasso cohort and inspect outgoing directly-follows segments whose source event is selected.",
+          "channel": "dev"
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.petrinet-layered",
+      "name": "Petri Net",
+      "description": "A second renderer for Accepting Petri Nets: a proper Sugiyama-style layered layout (rank assignment, barycenter crossing-reduction, coordinate assignment) — the same family of algorithm Graphviz's `dot` implements, run natively in the sandbox rather than through a bundled WASM binary. Ships alongside the host's own Petri net view so the two layouts can be compared side by side.",
+      "runtime": "view",
+      "authors": [
+        {
+          "name": "Promenade Team"
+        }
+      ],
+      "keywords": [
+        "petri-net",
+        "layout",
+        "graph",
+        "view"
+      ],
+      "renders": [
+        "AcceptingPetriNet"
+      ],
+      "consumes": [
+        "AcceptingPetriNet"
+      ],
+      "versions": [
+        {
+          "version": "0.3.4",
+          "url": "packages/run.promenade.petrinet-layered-0.3.4.pmplugin",
+          "sha256": "10cd38e4973765a55350c70aec1ab6d0d5c2a7df0436ae10e88ea5373ed3adf7",
+          "bytes": 578380,
+          "released": "2026-08-29",
+          "changelog": "\"Export as figure…\" now fits the whole diagram into view before capturing, instead of exporting whatever was panned/zoomed into the visible viewport, then restores the user's own view afterwards."
+        },
+        {
+          "version": "0.4.0",
+          "url": "packages/run.promenade.petrinet-layered-0.4.0.pmplugin",
+          "sha256": "6c7bd3619fc03e0d24e911a77146f3926f9f5857ac6400a31a46b18786acce1c",
+          "bytes": 579093,
+          "released": "2026-09-18",
+          "changelog": "Adds a \"Flow direction\" view parameter: the net can now run top to bottom as well as left to right, with silent-transition bars turning with the flow."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.playout",
+      "name": "Play-out",
+      "description": "Simulates an accepting Petri net into a real event log — the inverse of discovery. Cases arrive as a Poisson process and activities take service time, so concurrent branches genuinely overlap rather than being interleaved after the fact; a seed makes the whole log reproducible. Either a sample of the process in operation, or every distinct trace the model can produce. The result is an ordinary event log: every miner, view and conformance checker in the workspace reads it, which is what makes a model testable and a miner benchmarkable against a process whose ground truth is known.",
+      "runtime": "wasm",
+      "authors": [
+        {
+          "name": "István Koren",
+          "email": "korenistvan@inf.elte.hu",
+          "affiliation": "ELTE University Budapest, Data Science and Engineering",
+          "orcid": "0000-0003-1350-6732"
+        }
+      ],
+      "citation": {
+        "text": "Rozinat, A., Mans, R.S., Song, M. and van der Aalst, W.M.P. (2009). Discovering simulation models. Information Systems 34(3), 305-327 — the reference for what a simulation model of a process consists of: control flow, case arrivals, activity durations and a resource perspective. The token game itself is van der Aalst, W.M.P. (1998), The Application of Petri Nets to Workflow Management, JCSC 8(1), 21-66.",
+        "doi": "10.1016/j.is.2008.09.002",
+        "bibtex": "@article{rozinat2009simulation,\n  title   = {Discovering simulation models},\n  author  = {Rozinat, Anne and Mans, Ronny S. and Song, Minseok and van der Aalst, Wil M. P.},\n  journal = {Information Systems},\n  volume  = {34}, number = {3}, pages = {305--327}, year = {2009},\n  doi     = {10.1016/j.is.2008.09.002}\n}"
+      },
+      "keywords": [
+        "simulation",
+        "play-out",
+        "petri-net",
+        "event-log",
+        "benchmarking",
+        "ground-truth",
+        "rust"
+      ],
+      "provides": [
+        "TraditionalEventLog"
+      ],
+      "accepts": [
+        "AcceptingPetriNet"
+      ],
+      "consumes": [
+        "AcceptingPetriNet"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.playout.simulate",
+          "label": "Play out",
+          "description": "Plays the net's token game with time: starting an activity takes its input tokens and its outputs appear only when it finishes, so two branches of an AND-split run at once. Every case written is a firing sequence of the net — a completed run, replayable on the model it came from — which is the property an executable invariant re-establishes on randomised nets at every build.",
+          "inputs": [
+            "AcceptingPetriNet"
+          ],
+          "outputs": [
+            "TraditionalEventLog"
+          ],
+          "runtime": "wasm"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.1.0",
+          "url": "packages/run.promenade.playout-0.1.0.pmplugin",
+          "sha256": "959b99af8e94402b5ae19087459c6c9488c9f9c54af1b096a60bed51afd942d7",
+          "bytes": 76353
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.process-tree-view",
+      "name": "Process Tree View",
+      "description": "Draws a process tree: operator nodes, activity leaves and silent steps, in the notation pm4py prints.",
+      "runtime": "view",
+      "authors": [
+        {
+          "name": "Promenade Team"
+        }
+      ],
+      "keywords": [
+        "process-tree",
+        "visualization",
+        "view"
+      ],
+      "renders": [
+        "ProcessTree"
+      ],
+      "consumes": [
+        "ProcessTree"
+      ],
+      "versions": [
+        {
+          "version": "0.1.5",
+          "url": "packages/run.promenade.process-tree-view-0.1.5.pmplugin",
+          "sha256": "72f1c44a9066303e61b79f93bcb44373c12b88b604fc131184b29df632d12419",
+          "bytes": 6635,
+          "released": "2026-08-23",
+          "changelog": "Replaces \"Show silent steps\" (hid tau leaves entirely) with \"Compact silent steps\" (shrinks and mutes them instead). A tau leaf is what makes an XOR branch optional or a loop 0..* vs 1..* rather than mandatory — removing it left the operator with one child and no trace anything was hidden, misrepresenting the model rather than just decluttering it."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.raw-artifact-viewer",
+      "name": "Raw Artifact Viewer",
+      "description": "Looks at an artifact the way its storage does: a tree of the files actually present in its OPFS directory — Parquet relations, the catalog sidecar, a materialized JSON payload, anything left beside them — and, for a selected Parquet file, a paginated table of its rows straight out of the file, with its schema, row-group count and compression codec. The catalog's list of relations and what is on disk are not the same list, and this view is about the difference: it is the panel to open when a log's numbers look wrong, when an artifact takes more space than it should, or when a plugin's output needs checking against the bytes rather than against another view of them. Every value is rendered by DuckDB itself, so what the table shows is what the file says, not a re-interpretation of it.",
+      "runtime": "view",
+      "authors": [
+        {
+          "name": "István Koren",
+          "email": "korenistvan@inf.elte.hu",
+          "affiliation": "ELTE University Budapest, Data Science and Engineering",
+          "orcid": "0000-0003-1350-6732"
+        }
+      ],
+      "keywords": [
+        "storage",
+        "parquet",
+        "opfs",
+        "inspector",
+        "debugging",
+        "table",
+        "view"
+      ],
+      "versions": [
+        {
+          "version": "0.1.1",
+          "url": "packages/run.promenade.raw-artifact-viewer-0.1.1.pmplugin",
+          "sha256": "a01780db5eb51116d367500f2eb77c9c4f72d7586f66ac66540949e5e9acdc5a",
+          "bytes": 70347,
+          "released": "2026-09-08",
+          "changelog": "First release: a per-artifact file tree of what is physically in its OPFS directory, and for a selected Parquet file a paginated table of its rows straight out of the file — schema, exact row count, row groups and compression codec from the footer, values rendered by DuckDB so the table shows what the file says. Needs app 2026-09-08 or later: it uses the host's new views[].readsFiles capability (promenade.files() / openFile()), and against an older app the panel stays blank."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.soundness",
+      "name": "Soundness Checker",
+      "description": "Verifies an accepting Petri net: is it a workflow net, and is it sound? Reports the three classical requirements — every case can still finish, finishes with nothing left over, and every transition can fire — plus boundedness, each decided exactly on the reachability graph and each failure carrying the firing sequence that demonstrates it. Discovery plugins produce nets; this is what says whether the net produced is one you can trust.",
+      "runtime": "wasm + view",
+      "authors": [
+        {
+          "name": "István Koren",
+          "email": "korenistvan@inf.elte.hu",
+          "affiliation": "ELTE University Budapest, Data Science and Engineering",
+          "orcid": "0000-0003-1350-6732"
+        }
+      ],
+      "citation": {
+        "text": "van der Aalst, W.M.P. (1998). The Application of Petri Nets to Workflow Management. Journal of Circuits, Systems and Computers 8(1), 21-66. Unboundedness is decided with the covering test of Karp, R.M. and Miller, R.E. (1969), Parallel Program Schemata, JCSS 3(2), 147-195.",
+        "doi": "10.1142/S0218126698000043",
+        "bibtex": "@article{vanderaalst1998workflow,\n  title   = {The Application of Petri Nets to Workflow Management},\n  author  = {van der Aalst, Wil M. P.},\n  journal = {Journal of Circuits, Systems and Computers},\n  volume  = {8}, number = {1}, pages = {21--66}, year = {1998},\n  doi     = {10.1142/S0218126698000043}\n}"
+      },
+      "keywords": [
+        "soundness",
+        "verification",
+        "workflow-net",
+        "petri-net",
+        "deadlock",
+        "woflan",
+        "rust"
+      ],
+      "provides": [
+        "SoundnessReport"
+      ],
+      "renders": [
+        "SoundnessReport"
+      ],
+      "accepts": [
+        "AcceptingPetriNet"
+      ],
+      "consumes": [
+        "SoundnessReport",
+        "AcceptingPetriNet"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.soundness.check",
+          "label": "Check soundness",
+          "description": "Checks the workflow-net structure (one source place, one sink place, every node on a path between them) and then searches the net's reachable markings for the three soundness requirements. A net whose tokens can grow without limit is proven unbounded rather than searched forever. Each failure comes with the shortest firing sequence that reaches it.",
+          "inputs": [
+            "AcceptingPetriNet"
+          ],
+          "outputs": [
+            "SoundnessReport"
+          ],
+          "runtime": "wasm"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.1.0",
+          "url": "packages/run.promenade.soundness-0.1.0.pmplugin",
+          "sha256": "7c9506cb6b24a0f50be304a61eebef9eca28a4f51a8dbb522d08c5ffc4d0e35f",
+          "bytes": 665004
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.split-miner",
+      "name": "Split Miner",
+      "description": "Augusto, Conforti, Dumas, La Rosa and Polyvyanyy's Split Miner: an event log to a BPMN model in five steps — directly-follows graph and loops, concurrency, filtering, split gateways, join gateways. It is not restricted to block-structured models the way the Inductive Miner is, and it is guaranteed to produce deadlock-free ones, which is what makes it the accuracy-versus-simplicity benchmark other miners are measured against. The 2.0 variant reads concurrency from activities whose executions overlap in time rather than from interleaving, and can tell an inclusive choice from a parallel one.",
+      "runtime": "wasm",
+      "authors": [
+        {
+          "name": "István Koren",
+          "email": "korenistvan@inf.elte.hu",
+          "affiliation": "ELTE University Budapest, Data Science and Engineering",
+          "orcid": "0000-0003-1350-6732"
+        }
+      ],
+      "citation": {
+        "text": "Augusto, A., Conforti, R., Dumas, M., La Rosa, M., Polyvyanyy, A. (2019). Split miner: automated discovery of accurate and simple business process models from event logs. Knowledge and Information Systems 59(2), 251-284. The second variant implements Augusto, A., Dumas, M., La Rosa, M. (2021), Automated Discovery of Process Models with True Concurrency and Inclusive Choices, ICPM Workshops, LNBIP 406, 43-56.",
+        "doi": "10.1007/s10115-018-1214-x",
+        "bibtex": "@article{augusto2019splitminer,\n  title   = {Split miner: automated discovery of accurate and simple business process models from event logs},\n  author  = {Augusto, Adriano and Conforti, Raffaele and Dumas, Marlon and La Rosa, Marcello and Polyvyanyy, Artem},\n  journal = {Knowledge and Information Systems},\n  volume  = {59}, number = {2}, pages = {251--284}, year = {2019},\n  doi     = {10.1007/s10115-018-1214-x}\n}"
+      },
+      "keywords": [
+        "discovery",
+        "bpmn",
+        "split-miner",
+        "concurrency",
+        "filtering",
+        "gateways",
+        "rust"
+      ],
+      "provides": [
+        "Bpmn"
+      ],
+      "accepts": [
+        "TraditionalEventLog"
+      ],
+      "consumes": [
+        "TraditionalEventLog"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.split-miner.discover",
+          "label": "Split Miner",
+          "description": "Discovers a BPMN process model from a traditional event log. Concurrency is detected and pruned out of the directly-follows graph before any filtering, so causality and concurrency are never confused; the filter keeps every activity connected to its most frequent predecessor and successor whatever the threshold does, so no activity is stranded; and split and join gateways are then derived from the concurrency relations rather than guessed from arc counts.",
+          "inputs": [
+            "TraditionalEventLog"
+          ],
+          "outputs": [
+            "Bpmn"
+          ],
+          "runtime": "wasm"
+        }
+      ],
+      "recommends": [
+        "run.promenade.bpmn"
+      ],
+      "versions": [
+        {
+          "version": "0.1.1",
+          "url": "packages/run.promenade.split-miner-0.1.1.pmplugin",
+          "sha256": "842c477cc0b20656a24162c6a638671371d0cb250204d40d89bfeab415c91a19",
+          "bytes": 140144
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.survey",
+      "name": "Survey & Task",
+      "description": "Runs a study inside the workspace: a questionnaire panel that opens the visualisation each question is about, beside itself, with the parameters the author captured — and reads back what the participant did to it. A question can therefore be a task rather than a description of one, and its answer can be an element selected in a diagram or the state a filter was left in, not only a typed sentence. Nine question kinds, counterbalanced A/B blocks so a comparison is not also measuring which condition came first, and a response recorded with the stimulus and its parameters as submitted, so any answer can be put back on screen exactly as it was given. Surveys and responses are ordinary artifacts — a response is a provenance child of the questionnaire and of the log it was run against — and JSON export/import carries them between machines, which is what a study on more than one participant needs.",
+      "runtime": "view",
+      "authors": [
+        {
+          "name": "István Koren",
+          "email": "korenistvan@inf.elte.hu",
+          "affiliation": "ELTE University Budapest, Data Science and Engineering",
+          "orcid": "0000-0003-1350-6732"
+        }
+      ],
+      "keywords": [
+        "survey",
+        "questionnaire",
+        "user-study",
+        "usability",
+        "evaluation",
+        "a-b-test",
+        "experiment",
+        "view"
+      ],
+      "provides": [
+        "Survey",
+        "SurveyResponse"
+      ],
+      "renders": [
+        "Survey",
+        "SurveyResponse"
+      ],
+      "consumes": [
+        "Survey",
+        "SurveyResponse"
+      ],
+      "versions": [
+        {
+          "version": "0.1.2",
+          "url": "packages/run.promenade.survey-0.1.2.pmplugin",
+          "sha256": "190322a4f454fc5afc51d1d2393641d27fb1cb3ecd143933eeb476909c479285",
+          "bytes": 89952,
+          "released": "2026-09-10",
+          "changelog": "Fixes “Reopen”, which did nothing once the participant had closed the stimulus panel — a host bug affecting every plugin’s openView(): dockview fixes panel params at creation, so the opener a frame calls closed over the tab list as it stood when that frame opened. The runner, editor and New survey now declare dock:\"right\" and open as their own right-hand column instead of a tab over whatever you were looking at. Also in this line: the options editor is a proper draggable list (0.1.1) rather than one-per-line text that could not take a new line. Needs app 2026-09-10 or later."
+        },
+        {
+          "version": "0.1.3",
+          "url": "packages/run.promenade.survey-0.1.3.pmplugin",
+          "sha256": "38b18aaf5d42c9ac5855def3aa8c4458f6fd9f7aa7de93afe49ad034d4269085",
+          "bytes": 90077,
+          "released": "2026-09-16",
+          "changelog": "Cosmetic: \"New survey\" is now \"New survey…\", matching every other entry in the artifact panel's \"New artifact…\" menu. The ellipsis says the entry opens somewhere to work rather than doing the thing on the spot."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.synchronization-lens",
+      "name": "Synchronization Lens",
+      "description": "A dependency-focused object-centric analysis view that explains which related object is blocking a target object from satisfying its synchronization rule, and which event releases it.",
+      "runtime": "view",
+      "authors": [
+        {
+          "name": "István Koren",
+          "email": "korenistvan@inf.elte.hu",
+          "affiliation": "ELTE University Budapest, Data Science and Engineering",
+          "orcid": "0000-0003-1350-6732"
+        }
+      ],
+      "keywords": [
+        "object-centric",
+        "ocel",
+        "synchronization",
+        "dependencies",
+        "view"
+      ],
+      "renders": [
+        "ObjectCentricEventLog"
+      ],
+      "consumes": [
+        "ObjectCentricEventLog"
+      ],
+      "hidden": true,
+      "versions": [
+        {
+          "version": "0.1.0",
+          "url": "packages/run.promenade.synchronization-lens-0.1.0.pmplugin",
+          "sha256": "c4f4fdc531abe0b58257809d81d1f75d8ff88dcecfac9bc26685156e5accfd43",
+          "bytes": 7884,
+          "released": "2026-08-28",
+          "changelog": "First development-registry release: interactive synchronization dependency lens with a local fulfillment scenario.",
+          "channel": "dev"
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.totem",
+      "name": "TOTeM Discovery",
+      "description": "Discovers a Temporal Object Type Model (TOTeM): a type-level graph of an OCEL log's object types, connected by their most precise event-cardinality, log-cardinality and temporal-containment relations at a chosen support threshold. Ported from Grkmr/TOTeM, run in Pyodide, rendered as a draggable, force-laid-out React Flow graph.",
+      "runtime": "pyodide + view",
+      "authors": [
+        {
+          "name": "Promenade Team"
+        }
+      ],
+      "citation": {
+        "text": "Algorithm and TOTeM notation from Grkmr/TOTeM.",
+        "url": "https://github.com/Grkmr/TOTeM"
+      },
+      "keywords": [
+        "discovery",
+        "object-centric",
+        "totem",
+        "temporal",
+        "cardinality",
+        "pm4py",
+        "python",
+        "react-flow"
+      ],
+      "provides": [
+        "TotemModel"
+      ],
+      "renders": [
+        "TotemModel"
+      ],
+      "accepts": [
+        "ObjectCentricEventLog"
+      ],
+      "consumes": [
+        "TotemModel",
+        "ObjectCentricEventLog"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.totem.discover",
+          "label": "Discover TOTeM",
+          "inputs": [
+            "ObjectCentricEventLog"
+          ],
+          "outputs": [
+            "TotemModel"
+          ],
+          "runtime": "pyodide"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.1.3",
+          "url": "packages/run.promenade.totem-0.1.3.pmplugin",
+          "sha256": "a57541bdf0e7b8aa8448258fbde822baf9ccb758634118a09d611d95684b8820",
+          "bytes": 144915,
+          "released": "2026-08-29",
+          "changelog": "\"Export as figure…\" now fits the whole diagram into view before capturing, instead of exporting whatever was panned/zoomed into the visible viewport, then restores the user's own view afterwards."
+        },
+        {
+          "version": "0.1.4",
+          "url": "packages/run.promenade.totem-0.1.4.pmplugin",
+          "sha256": "11d8e0b285393771736ac08bc6d7cac3c8203f670c16d2796053699b8daea25a",
+          "bytes": 145030,
+          "released": "2026-09-15",
+          "changelog": "Declares `family: \"model\"` on `TotemModel`, so a discovered TOTeM is coloured as a model rather than as an outcome in the artifact tree."
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.tree-generator",
+      "name": "Process Tree Generator",
+      "description": "Draws a random process tree from a parameterised distribution, after Jouck and Depaire's PTandLogGenerator: how many activities, how much concurrency, how many loops, whether there are silent steps or duplicate labels. It is what an evaluation needs that real logs cannot give — a model whose properties were chosen rather than observed, and known exactly before any log exists. Play the tree out and the whole ground truth of the resulting log is known too.",
+      "runtime": "wasm",
+      "authors": [
+        {
+          "name": "István Koren",
+          "email": "korenistvan@inf.elte.hu",
+          "affiliation": "ELTE University Budapest, Data Science and Engineering",
+          "orcid": "0000-0003-1350-6732"
+        }
+      ],
+      "citation": {
+        "text": "Jouck, T. and Depaire, B. (2019). Generating artificial data for empirical analysis of control-flow discovery algorithms: a process tree and log generator. Business & Information Systems Engineering 61(6), 695-712. This plugin implements the tree half of that generator, from the paper's description; the log half is the Play-out plugin.",
+        "doi": "10.1007/s12599-018-0541-5",
+        "bibtex": "@article{jouck2019generating,\n  title   = {Generating Artificial Data for Empirical Analysis of Control-flow Discovery Algorithms},\n  author  = {Jouck, Toon and Depaire, Benoit},\n  journal = {Business \\& Information Systems Engineering},\n  volume  = {61}, number = {6}, pages = {695--712}, year = {2019},\n  doi     = {10.1007/s12599-018-0541-5}\n}"
+      },
+      "keywords": [
+        "generator",
+        "process-tree",
+        "benchmarking",
+        "ground-truth",
+        "synthetic",
+        "ptandloggenerator",
+        "rust"
+      ],
+      "provides": [
+        "ProcessTree"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.tree-generator.generate",
+          "label": "Generate a process tree…",
+          "description": "Draws one tree: its size from a triangular distribution over the range you give, its operators from the weights you give, top down. The result is an ordinary Process Tree artifact — the tree view draws it, the BPMN conversion converts it, and every model-side plugin reads it, exactly as if the Inductive Miner had discovered it.",
+          "inputs": [],
+          "outputs": [
+            "ProcessTree"
+          ],
+          "runtime": "wasm"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.1.0",
+          "url": "packages/run.promenade.tree-generator-0.1.0.pmplugin",
+          "sha256": "381448cf747eeeeada4c8005c807db3e0111c7a1e6cf6fadd75e9600ee4deb2a",
+          "bytes": 52292
+        }
+      ]
+    }
+  ]
+}

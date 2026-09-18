@@ -1,0 +1,49 @@
+{
+  "manifestVersion": 1,
+  "id": "core.object-interactions-sql",
+  "name": "Object Interaction Graph",
+  "version": "0.1.0",
+  "description": "Which object types act together, and how — a Promenade Relational Program built specifically on OCEL 2.0's E2O/O2O relations and qualifiers, the part of the logical schema a Traditional Event Log simply does not have. Second reference action for the Promenade Relational API, after core.discover-dfg-sql.",
+  "license": "MIT",
+  "runtime": "relational",
+  "apiVersion": "1",
+  "artifactTypes": [
+    { "id": "ObjectInteractionGraph", "label": "Object Interaction Graph", "shortLabel": "OI" }
+  ],
+  "actions": [
+    {
+      "id": "core.object-interactions-sql.discover",
+      "label": "Discover Object Interactions",
+      "memory": "medium",
+      "inputs": [
+        {
+          "name": "log",
+          "type": "ObjectCentricEventLog",
+          "required": true,
+          "label": "an Object-Centric Event Log",
+          "requires": ["objects"]
+        }
+      ],
+      "outputs": [
+        { "name": "graph", "type": "ObjectInteractionGraph" }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "minSharedEvents": {
+            "type": "integer",
+            "title": "Minimum shared events",
+            "description": "Two object types are drawn as connected only once they co-occur on at least this many events.",
+            "default": 1,
+            "minimum": 1,
+            "maximum": 5000,
+            "primary": true,
+            "cheap": true
+          }
+        },
+        "required": ["minSharedEvents"]
+      },
+      "queryFile": "query.sql"
+    }
+  ]
+}

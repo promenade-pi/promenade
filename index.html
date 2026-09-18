@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Promenade Lab</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <!--
+      Stamps the saved colour scheme onto <html> before first paint. The
+      stylesheet's `color-scheme: light dark` already tracks the OS on its
+      own, so this only matters for a user who pinned Light or Dark against
+      it — without it they get a flash of the other theme while the module
+      bundle loads. Deliberately small, and duplicated from `src/ui/theme.ts`,
+      which re-applies the same thing once React is up.
+    -->
+    <script>
+      (function () {
+        try {
+          var pref = localStorage.getItem('promenade.theme');
+          document.documentElement.dataset.theme = pref === 'light' || pref === 'dark'
+            ? pref
+            : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body class="dockview-theme-light">
+    <!--
+      Dockview themes with CSS custom properties scoped to this class — fine
+      for anything rendered inside the DockviewReact tree (which also carries
+      the class), but the tab-overflow dropdown and other floating chrome are
+      appended straight to `document.body` (see dockview-core's own overlay
+      handling), landing outside that scope and falling back to the
+      library's unthemed default look — a dark popup next to an otherwise
+      light app. Repeating the class here means `document.body` is always an
+      ancestor either way, so every dockview-rendered element inherits the
+      same theme variables regardless of where in the DOM it actually mounts.
+
+      It stays `-light` in both colour schemes: the class supplies dockview's
+      metrics (strip height, radii, sash sizes), while its colours are
+      remapped onto the app's own tokens in `styles.css` and follow the theme
+      from there.
+    -->
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

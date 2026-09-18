@@ -1,0 +1,487 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <!--
+      The sandbox attribute alone does NOT stop network egress: a plugin in an
+      opaque-origin frame can still issue fetch/XHR/WebSocket requests and
+      exfiltrate whatever data it was given. Verified empirically, not assumed.
+
+      `default-src 'none'` closes that: no connect-src, so fetch, XHR,
+      WebSocket, beacons and EventSource all fail. Scripts are allowed inline
+      and via eval because the host injects the plugin bundle as text through
+      the handshake; nothing is loaded over the network by the frame itself.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none';
+               script-src 'unsafe-inline' 'unsafe-eval';
+               style-src 'unsafe-inline';
+               img-src data: blob:;
+               font-src data:;"
+    />
+    <style>
+      /* Theme tokens are injected by the host, never read from the parent —
+         an opaque-origin frame cannot see the parent's stylesheets at all. */
+      html, body { margin: 0; height: 100%; overflow: hidden; }
+      body {
+        font: 12px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg, #fff);
+        color: var(--text, #1c2027);
+      }
+      #root { height: 100%; }
+      #err {
+        padding: 10px 12px; color: var(--danger, #d64550);
+        font: 11px ui-monospace, Menlo, monospace; white-space: pre-wrap;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <div id="err" hidden></div>
+
+    <script>
+    /**
+     * Plugin frame bootstrap.
+     *
+     * Runs under `sandbox="allow-scripts"` without `allow-same-origin`, so the
+     * document has an opaque origin: no access to the host's DOM, cookies,
+     * storage or network credentials. The only channel is the MessagePort the
+     * host transfers in during the handshake.
+     *
+     * This file is host-owned. Plugin code is loaded into it and sees only the
+     * `promenade` object defined below.
+     */
+    (function () {
+      var pending = new Map();
+      var seq = 0;
+      var port = null;
+      var handlers = {};
+      var state = { artifact: null, view: null, theme: {}, selection: { items: [] }, colors: {} };
+
+      function rpc(type, payload, transfer) {
+        var id = ++seq;
+        return new Promise(function (resolve, reject) {
+          pending.set(id, { resolve: resolve, reject: reject });
+          port.postMessage({ type: type, id: id, payload: payload }, transfer || []);
+        });
+      }
+      function cancellableRpc(type, payload) {
+        var id = ++seq;
+        var promise = new Promise(function (resolve, reject) {
+          pending.set(id, { resolve: resolve, reject: reject });
+          port.postMessage({ type: type, id: id, payload: payload });
+        });
+        return { promise: promise, cancel: function () { port.postMessage({ type: 'cancelSql', payload: { id: id } }); } };
+      }
+
+      function applyTheme(theme) {
+        state.theme = theme || {};
+        var root = document.documentElement;
+        for (var k in state.theme) root.style.setProperty('--' + k, state.theme[k]);
+        // `scheme` is the host's resolved light/dark, not a colour. Setting
+        // `color-scheme` from it is what gives a plugin's scrollbars, text
+        // fields and selects the matching look — the frame is a separate
+        // document, so it does not inherit the host's.
+        if (state.theme.scheme) root.style.colorScheme = state.theme.scheme;
+      }
+
+      function fail(e) {
+        var el = document.getElementById('err');
+        el.hidden = false;
+        el.textContent = String((e && e.stack) || e);
+        // An opaque-origin frame is otherwise a black box to the host: it
+        // cannot read this DOM. Errors are reported outward so a broken plugin
+        // is diagnosable instead of silently blank.
+        try { parent.postMessage({ __plugin: 'error', message: String((e && e.stack) || e) }, '*'); } catch (_) {}
+      }
+      function note(stage, detail) {
+        try { parent.postMessage({ __plugin: 'trace', stage: stage, detail: detail }, '*'); } catch (_) {}
+      }
+
+      /**
+       * The plugin-facing API. Deliberately small: data in, colours and
+       * selection through the host, nothing else. There is no DOM handle to
+       * the host, no storage, and no way to open or move a panel — panel
+       * geometry belongs to the host.
+       */
+      var promenade = {
+        /**
+         * The only data door, same contract as in-process views: SQL in,
+         * columnar data out.
+         *
+         * Columns arrive as typed arrays where the type allows it, so numeric
+         * columns cross the frame boundary as transferred buffers rather than
+         * an array of objects.
+         */
+        sql: function (text) { return rpc('sql', { text: text }); },
+
+        /** A cancellable SQL request for long-running analytical views. */
+        sqlCancelable: function (text) { return cancellableRpc('sqlCancelable', { text: text }); },
+
+        /**
+         * Publishes one validated ObjectCentricExecutionPartition derived from
+         * this frame's bound OCEL. This is intentionally a narrow capability,
+         * not a general filesystem or catalogue-write API for plugins.
+         */
+        publishExecutionPartition: function (payload, name) {
+          return rpc('publishExecutionPartition', { payload: payload, name: name || '' });
+        },
+
+        /**
+         * Publishes hand-authored rows as a new log artifact — the door an
+         * authoring view (a manifest `standalone` view declaring
+         * `publishes`) creates artifacts through. Only the types the
+         * manifest declared are accepted, and the host validates every row
+         * before anything is written.
+         *
+         * request: { type, name, events, objects, e2o, o2o?, semantics? },
+         * rows as plain objects keyed by the same column names
+         * `promenade.publish_ocel()` takes in Python (`event_id`/`activity`
+         * /`ts`, `object_id`/`object_type`, …). Any other key on an event or
+         * object row becomes an attribute. Resolves to { id, name, type }.
+         */
+        publishLog: function (request) {
+          return rpc('publishLog', request || {});
+        },
+
+        /** Publishes one validated, source-bound Interaction Atlas cohort. */
+        publishInteractionCohort: function (payload, name) {
+          return rpc('publishInteractionCohort', { payload: payload, name: name || '' });
+        },
+
+        /**
+         * Reads membership for one host-advertised Atlas comparison cohort.
+         * The host verifies both the provider and the canonical source before
+         * returning it; this is deliberately not a general artifact read API.
+         */
+        comparisonCohort: function (id) {
+          return rpc('readComparisonCohort', { id: String(id || '') });
+        },
+
+        /**
+         * Reads one host-advertised exact lifecycle-bin lasso selection. Only
+         * manifests opting into interaction-cohort-v1 receive candidates; the
+         * host validates the source binding and cohort payload before return.
+         */
+        interactionSelection: function (id) {
+          return rpc('readInteractionSelection', { id: String(id || '') });
+        },
+
+        /** Reads one host-advertised, source-bound OCPN replay-evidence artifact. */
+        replayEvidence: function (id) {
+          return rpc('readReplayEvidence', { id: String(id || '') });
+        },
+
+        /**
+         * The bound artifact's stored files — what is physically in its OPFS
+         * directory, which is *not* the same list as the relations the
+         * catalog declares: a sidecar, a materialized JSON payload, or a
+         * Parquet file whose relation has since been dropped all exist
+         * without appearing there. Available only to a view whose manifest
+         * declares `readsFiles`.
+         *
+         * Resolves to { entries: [{ path, name, kind, size, logical? }] },
+         * directories first then names, `logical` set only where the file is
+         * one of the artifact's declared relations.
+         */
+        files: function () { return rpc('files', {}); },
+
+        /**
+         * Opens one of those files, by its `path`.
+         *
+         * A Parquet file answers with a *relation*, not bytes:
+         * { kind: 'parquet', relation, rows, columns, rowGroups, createdBy,
+         * compression, size } — `relation` is a DuckDB relation over the file
+         * itself, so paging it is an ordinary `sql()` call with LIMIT and
+         * OFFSET and nothing has to be decoded here. `event.parquet` resolves
+         * to the file, not to the classifier-applied view over it, because
+         * this is the raw door.
+         *
+         * Any other file answers with { kind: 'bytes', bytes, size, truncated }
+         * — capped, `truncated` telling you so. Decoding is yours.
+         *
+         * The path is resolved by the host inside the bound artifact's own
+         * directory; nothing else is reachable through it.
+         */
+        openFile: function (path, maxBytes) {
+          return rpc('openFile', { path: String(path || ''), maxBytes: maxBytes });
+        },
+
+        /**
+         * What else is on screen, and how it is configured.
+         *
+         * `{ panels: [{ panelId, artifactId, artifactName, artifactType,
+         * viewId, viewLabel, params, active }] }` — the open panels and the
+         * view parameters each one is currently showing. Available only to a
+         * view whose manifest declares `readsWorkspace`.
+         *
+         * This is the read direction of what `openView()` already does in
+         * the write direction. A panel that drives its neighbours — a
+         * questionnaire that opens a visualisation and then has to check
+         * whether the participant filtered it — needs both, and until now
+         * only one existed.
+         *
+         * Descriptions only: no artifact contents (that is `sql()`), no
+         * handles, nothing that lets this frame touch another panel except
+         * by asking the host through `openView()`.
+         */
+        workspace: function () { return rpc('workspace', {}); },
+
+        // `on('workspace', fn)` fires whenever that snapshot changes — a
+        // panel opening or closing, or a parameter moving next door. Same
+        // declaration gate; unchanged snapshots are not sent.
+
+        /**
+         * Writes a new artifact of a type **this package declares** into the
+         * catalog.
+         *
+         * `{ type, name, value, inputs?, meta? }` → resolves to
+         * `{ id, name, type }`. `value` is opaque JSON: the host stores it
+         * and hands it back through `artifact().value` when the artifact is
+         * next opened, and has no opinion about what is in it — the package
+         * that defined the type is the only thing that could.
+         *
+         * `inputs` are the artifacts this one was made from, and they are
+         * checked against the catalog before anything is written, so the
+         * provenance edges the tree draws are real rather than asserted. No
+         * inputs makes it a root, exactly like an import.
+         *
+         * Two gates, both from the manifest: the view must list the type in
+         * `publishes`, and the package must have declared the type itself in
+         * `artifactTypes`. So a plugin can create its own kinds of artifact
+         * freely and can never forge anybody else's.
+         */
+        publishArtifact: function (request) {
+          return rpc('publishArtifact', request || {});
+        },
+
+        /**
+         * Proposes repair operations onto a derived copy of the log this
+         * view's artifact was computed from.
+         *
+         * Deliberately narrow: the view passes operations, never a target.
+         * The host resolves the source log from this artifact's provenance,
+         * finds or creates the one derived log that collects repairs for it,
+         * inserts each operation at its phase position and opens the
+         * transformation editor on the result. So calling it twice with two
+         * different fixes builds one repaired log with two steps, not two
+         * artifacts — and the source is never modified.
+         *
+         * Requires `derivesLogs` in the view's manifest entry. Resolves to
+         * `{ id, name, applied }`.
+         */
+        deriveLog: function (ops) {
+          return rpc('deriveLog', { ops: ops || [] });
+        },
+
+        /** Stable colour for a domain value, assigned once by the host. */
+        color: function (domain, value) {
+          var d = state.colors[domain];
+          return (d && d[value]) || 'var(--text-dim, #888)';
+        },
+
+        /** Publishes a selection. Ids must come from the artifact schema. */
+        select: function (items) {
+          port.postMessage({ type: 'select', payload: { items: items } });
+        },
+
+        /**
+         * Pushes parameter values back into the host's own param state —
+         * the same schema-declared keys the host feeds in via the `params`
+         * event, just flowing the other way. Lets a plugin that draws its
+         * own interaction (a drag-selected time range, say) commit through
+         * the very same Inspector-owned params a manifest control would,
+         * instead of only ever being a read-only recipient of them.
+         */
+        setParams: function (patch) {
+          port.postMessage({ type: 'setParams', payload: patch || {} });
+        },
+
+        /**
+         * Artifact metadata, plus the payload for small inline artifacts.
+         *
+         * A log never crosses this boundary — that is what `sql()` is for. A
+         * process tree or a Petri net has no table to query, so its payload is
+         * handed over directly as `.value`.
+         */
+        artifact: function () { return state.artifact; },
+
+        /**
+         * Which view this frame is — `{ id, label }`, the registered view id
+         * from the manifest.
+         *
+         * A package normally ships one bundle and several views out of it
+         * (the frame evals exactly one script), so "which of my views am I?"
+         * is a question the code has to be able to ask. Not a capability:
+         * knowing your own identity is not a privilege.
+         */
+        view: function () { return state.view; },
+
+        theme: function () { return state.theme; },
+
+        // Run-bound live preview (a view with manifest `livePreview: true`,
+        // opened while its producing action still runs): `artifact().runState`
+        // is 'running' until the action finishes. `on('liveFrame', fn)` gets
+        // each structured `ctx.progress` batch (only an action that emits
+        // `data` has any); `on('liveRunState', fn)` gets
+        // { state, message, fraction } on every change, including while
+        // still 'running' — `fraction` is null when the run is genuinely
+        // indefinite, so draw an indeterminate animation rather than a bar.
+
+        /**
+         * Whatever this same panel last handed to `setCachedState`, or
+         * `null` on a genuinely first open. The host keeps this in memory
+         * per panel — closing and reopening the same view's tab gets a
+         * fresh frame (there is no way around that; the frame is destroyed
+         * with the panel) but does not have to discard whatever the plugin
+         * already computed, if the plugin chooses to save it. Nothing is
+         * saved automatically: an expensive-to-extract result and a
+         * megabyte of inline artifact bytes look identical from here, so
+         * only the plugin knows what is worth remembering.
+         *
+         * An RPC, not a value read off `init` — a large cached value (a
+         * plugin's whole prior dataset, potentially) costs real, sometimes
+         * multi-second, structured-clone time, paid by the browser as part
+         * of delivering whatever message carries it. Baked into `init`
+         * itself, that cost lands *before* the plugin's own code — the
+         * thing that would otherwise render a loading state — has run even
+         * once; nothing can paint during a cost that precedes the first
+         * paintable frame. Asking for it afterwards, over the same
+         * `MessageChannel` port `sql()` already uses, means the plugin has
+         * had its chance to mount and show *something* first, so that cost
+         * lands during an already-visible loading state instead of before
+         * one is ever possible — the total wall-clock time is unchanged,
+         * but the page is never inexplicably frozen while it passes.
+         */
+        cachedState: function () { return rpc('cachedState', {}); },
+
+        /**
+         * Hands the host a value to return via `cachedState()` next time
+         * this exact panel is reopened. Replaces whatever was saved before.
+         * Pass `null` to forget it. The value crosses via the same
+         * structured-clone channel as `sql()`'s results, so Maps, Sets and
+         * typed arrays survive intact — just as they can be handed straight
+         * back into the same reducer that produced them, no re-parsing
+         * needed.
+         */
+        setCachedState: function (value) { port.postMessage({ type: 'cache', payload: value }); },
+
+        /**
+         * Opens another artifact's view in the workspace — or focuses it, if
+         * a panel for that exact (artifact, view) pair is already open.
+         * `viewId` omitted opens whatever view that artifact would open
+         * through if picked from the tree (its last-used or primary view).
+         * Panel geometry stays host-owned either way: this asks the host to
+         * open one, exactly like clicking it in the tree would, rather than
+         * handing the frame any way to place or size it itself. Rejects if
+         * the artifact or view doesn't exist.
+         */
+        openView: function (artifactId, viewId, params, opts) {
+          // `opts.beside: 'left' | 'right'` asks for the panel to open
+          // alongside this one instead of wherever a new panel would
+          // otherwise land — which, for a panel opened *by* another panel,
+          // is a tab on top of the opener. Still a request, not geometry:
+          // the host resolves it the same way "Compare side by side" does,
+          // and is free to ignore it.
+          return rpc('openView', {
+            artifactId: String(artifactId || ''),
+            viewId: viewId ? String(viewId) : null,
+            params: params || null,
+            beside: opts && (opts.beside === 'left' || opts.beside === 'right') ? opts.beside : null,
+          });
+        },
+
+        /** Registers lifecycle callbacks. */
+        on: function (event, fn) { handlers[event] = fn; },
+
+        /** Asks the host to resize nothing — reports readiness instead. */
+        ready: function () { port.postMessage({ type: 'ready' }); },
+      };
+      window.promenade = promenade;
+
+      note('frame-ready');
+
+      window.addEventListener('message', function (e) {
+        // The handshake is the only message accepted on the window itself;
+        // everything afterwards flows through the transferred port.
+        if (!port && e.data && e.data.type === 'init' && e.ports && e.ports[0]) {
+          port = e.ports[0];
+          state.artifact = e.data.artifact;
+          state.view = e.data.viewId ? { id: e.data.viewId, label: e.data.viewLabel || '' } : null;
+          state.colors = e.data.colors || {};
+          applyTheme(e.data.theme);
+
+          port.onmessage = function (ev) {
+            var m = ev.data;
+            if (m.type === 'result' || m.type === 'error') {
+              var w = pending.get(m.id);
+              if (!w) return;
+              pending.delete(m.id);
+              if (m.type === 'error') w.reject(new Error(m.error));
+              else w.resolve(m.payload);
+              return;
+            }
+            if (m.type === 'selection') {
+              state.selection = m.payload;
+              try { handlers.selection && handlers.selection(m.payload); } catch (err) { fail(err); }
+              return;
+            }
+            if (m.type === 'theme') {
+              applyTheme(m.payload.theme);
+              state.colors = m.payload.colors || state.colors;
+              try { handlers.theme && handlers.theme(m.payload); } catch (err) { fail(err); }
+              return;
+            }
+            if (m.type === 'resize') {
+              // Resize must be injected: an iframe gets no useful layout event
+              // from the host's docking manager.
+              try { handlers.resize && handlers.resize(m.payload); } catch (err) { fail(err); }
+              return;
+            }
+            if (m.type === 'workspace') {
+              try { handlers.workspace && handlers.workspace(m.payload); } catch (err) { fail(err); }
+              return;
+            }
+            if (m.type === 'params') {
+              try { handlers.params && handlers.params(m.payload); } catch (err) { fail(err); }
+              return;
+            }
+            if (m.type === 'liveFrame') {
+              try { handlers.liveFrame && handlers.liveFrame(m.payload); } catch (err) { fail(err); }
+              return;
+            }
+            if (m.type === 'liveRunState') {
+              if (state.artifact) state.artifact.runState = m.payload && m.payload.state;
+              try { handlers.liveRunState && handlers.liveRunState(m.payload); } catch (err) { fail(err); }
+              return;
+            }
+          };
+
+          // Load the plugin as a classic script. A module would need CORS from
+          // an opaque origin; a classic script is a no-cors fetch and keeps
+          // plugin bundling free of host-specific requirements.
+          note('init', e.data.entry);
+          // The plugin source is handed in rather than fetched here.
+          //
+          // An opaque-origin document cannot reliably load subresources, so
+          // the host fetches the bundle and passes the text through the
+          // handshake. Isolation is unchanged — the code still executes in
+          // this sandboxed frame with no host DOM, no storage and no
+          // credentialed network — and the host gains the ability to verify or
+          // pin a plugin bundle before it ever runs.
+          try {
+            (0, eval)(e.data.source);
+            note('plugin-evaluated', e.data.entry);
+          } catch (err) {
+            fail(err);
+          }
+        }
+      });
+
+      window.addEventListener('error', function (e) { fail(e.error || e.message); });
+      window.addEventListener('unhandledrejection', function (e) { fail(e.reason); });
+    })();
+    </script>
+  </body>
+</html>

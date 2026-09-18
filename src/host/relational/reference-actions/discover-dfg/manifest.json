@@ -1,0 +1,46 @@
+{
+  "manifestVersion": 1,
+  "id": "core.discover-dfg-sql",
+  "name": "Discover DFG (Relational)",
+  "version": "0.1.1",
+  "description": "Directly-Follows Graph discovery expressed as a Promenade Relational Program — the reference action that proves the relational API and its SQL Profile v1 against a real algorithm. Targets the same DFG artifact type as the Rust/WASM discoverer (core.discover.dfg), so the two are directly comparable.",
+  "license": "MIT",
+  "runtime": "relational",
+  "apiVersion": "1",
+  "artifactTypes": [],
+  "actions": [
+    {
+      "id": "core.discover-dfg-sql.discover",
+      "label": "Discover DFG (Relational)",
+      "memory": "medium",
+      "inputs": [
+        {
+          "name": "log",
+          "type": "TraditionalEventLog",
+          "required": true,
+          "label": "a Traditional Event Log"
+        }
+      ],
+      "outputs": [
+        { "name": "dfg", "type": "DFG" }
+      ],
+      "params": {
+        "type": "object",
+        "properties": {
+          "minFrequency": {
+            "type": "integer",
+            "title": "Minimum edge frequency",
+            "description": "Directly-follows pairs seen fewer than this many times are dropped before the result leaves the query — the same parameter core.discover.dfg exposes, so the two discoverers can be compared edge-for-edge.",
+            "default": 1,
+            "minimum": 1,
+            "maximum": 5000,
+            "primary": true,
+            "cheap": true
+          }
+        },
+        "required": ["minFrequency"]
+      },
+      "queryFile": "query.sql"
+    }
+  ]
+}

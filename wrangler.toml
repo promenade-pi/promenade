@@ -1,0 +1,22 @@
+# Deploys the built app (static assets) plus a small worker that serves the
+# plugin registry from R2 — independent of the app's own build/deploy (see
+# dev-registry/publish-to-r2.sh for publishing registry updates).
+#
+# Deploys to the SAME Worker name the app already lives at, so the existing
+# app.promenade.run Custom Domain route (attached to this Worker name at the
+# platform level, not declared here) is left untouched.
+name = "spring-dew-fa98"
+main = "worker-entry.ts"
+compatibility_date = "2026-09-06"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+# Without this, a request matching a static asset path never reaches our
+# fetch handler at all — Workers Assets serves it directly. `/registry/*`
+# has no matching file in dist/, so it needs the worker to run first.
+run_worker_first = ["/registry/*"]
+
+[[r2_buckets]]
+binding = "REGISTRY_BUCKET"
+bucket_name = "promenade-registry"
