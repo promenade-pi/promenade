@@ -53,7 +53,7 @@
         "doi": "10.1016/j.dss.2008.07.002",
         "bibtex": "@article{song2008organizational,\n  title   = {Towards Comprehensive Support for Organizational Mining},\n  author  = {Song, Minseok and van der Aalst, Wil M. P.},\n  journal = {Decision Support Systems},\n  volume  = {46}, number = {1}, pages = {300--317}, year = {2008},\n  doi     = {10.1016/j.dss.2008.07.002}\n}"
       },
-      "homepage": "https://github.com/promenade-lab/org-model",
+      "homepage": "https://github.com/promenade-pi/plugins/tree/main/org-model",
       "keywords": [
         "organizational-mining",
         "role-discovery",
@@ -102,6 +102,14 @@
           "bytes": 139456,
           "released": "2026-09-16",
           "changelog": "Initial release: hierarchical role discovery over a social network, with the dendrogram and the cut drawn beside the groups."
+        },
+        {
+          "version": "0.1.1",
+          "url": "packages/org.promenade.org-model-0.1.1.pmplugin",
+          "sha256": "e022040e3bb3279884c5a6f29f9b4ab6f637bc360b1e6da4189cf7662898c0f1",
+          "bytes": 139233,
+          "released": "2026-09-18",
+          "changelog": "Corrected the homepage/repository URLs: the plugins live in one repository, promenade-pi/plugins, not one repository per plugin under an organisation that was never created. Metadata only — no functional change."
         }
       ]
     },
@@ -227,7 +235,7 @@
         "doi": "10.1145/3041218",
         "bibtex": "@article{pika2017profiles,\n  title   = {Mining Resource Profiles from Event Logs},\n  author  = {Pika, Anastasiia and Leyer, Michael and Wynn, Moe T. and Fidge, Colin J. and ter Hofstede, Arthur H. M. and van der Aalst, Wil M. P.},\n  journal = {ACM Transactions on Management Information Systems},\n  volume  = {8}, number = {1}, pages = {1--30}, year = {2017},\n  doi     = {10.1145/3041218}\n}"
       },
-      "homepage": "https://github.com/promenade-lab/resource-behavior",
+      "homepage": "https://github.com/promenade-pi/plugins/tree/main/resource-behavior",
       "keywords": [
         "organizational-mining",
         "resource",
@@ -277,6 +285,14 @@
           "bytes": 217570,
           "released": "2026-09-16",
           "changelog": "Initial release: per-person volume, spread, batching and collaboration always; service time, utilisation, multitasking and workload-dependent speed wherever the log records start and complete separately."
+        },
+        {
+          "version": "0.1.1",
+          "url": "packages/org.promenade.resource-behavior-0.1.1.pmplugin",
+          "sha256": "817cc22064fdd9cb129f0ef2aa26c4a63dcfeb0db407b0864e9098984c213e85",
+          "bytes": 217126,
+          "released": "2026-09-18",
+          "changelog": "Corrected the homepage/repository URLs: the plugins live in one repository, promenade-pi/plugins, not one repository per plugin under an organisation that was never created. Metadata only — no functional change."
         }
       ]
     },
@@ -295,7 +311,7 @@
         "doi": "10.1007/s10606-005-9005-9",
         "bibtex": "@article{vanderaalst2005social,\n  title   = {Discovering Social Networks from Event Logs},\n  author  = {van der Aalst, Wil M. P. and Reijers, Hajo A. and Song, Minseok},\n  journal = {Computer Supported Cooperative Work},\n  volume  = {14}, number = {6}, pages = {549--593}, year = {2005},\n  doi     = {10.1007/s10606-005-9005-9}\n}"
       },
-      "homepage": "https://github.com/promenade-lab/social-network",
+      "homepage": "https://github.com/promenade-pi/plugins/tree/main/social-network",
       "keywords": [
         "organizational-mining",
         "social-network",
@@ -350,6 +366,14 @@
           "bytes": 215197,
           "released": "2026-09-16",
           "changelog": "Carries each person's activity mix, so a consumer can name a group of them — the Organizational Model plugin labels its roles from it."
+        },
+        {
+          "version": "0.2.1",
+          "url": "packages/org.promenade.social-network-0.2.1.pmplugin",
+          "sha256": "7c47013959e298c11bdee779c5a6773a0233429c24e94398f56a38beeb524d42",
+          "bytes": 214975,
+          "released": "2026-09-18",
+          "changelog": "Corrected the homepage/repository URLs: the plugins live in one repository, promenade-pi/plugins, not one repository per plugin under an organisation that was never created. Metadata only — no functional change."
         }
       ]
     },
@@ -501,7 +525,7 @@
         "doi": "10.1002/widm.1045",
         "bibtex": "@article{vanderaalst2012replaying,\n  title   = {Replaying History on Process Models for Conformance Checking and Performance Analysis},\n  author  = {van der Aalst, Wil M. P. and Adriansyah, Arya and van Dongen, Boudewijn F.},\n  journal = {WIREs Data Mining and Knowledge Discovery},\n  volume  = {2}, number = {2}, pages = {182--192}, year = {2012},\n  doi     = {10.1002/widm.1045}\n}"
       },
-      "homepage": "https://github.com/promenade-lab/alignment",
+      "homepage": "https://github.com/promenade-pi/plugins/tree/main/alignment-rs",
       "keywords": [
         "conformance",
         "alignment",
@@ -568,6 +592,14 @@
           "bytes": 75009,
           "released": "2026-09-14",
           "changelog": "Adds token-based replay as a second action, with per-place missing/remaining token diagnostics and a view that draws them on the net."
+        },
+        {
+          "version": "0.3.1",
+          "url": "packages/run.promenade.alignment-0.3.1.pmplugin",
+          "sha256": "0e0a6d027511e2c7f4a8de839ef91f23de704707f12471fa95150c6148b473e3",
+          "bytes": 74766,
+          "released": "2026-09-18",
+          "changelog": "Corrected the homepage/repository URLs: the plugins live in one repository, promenade-pi/plugins, not one repository per plugin under an organisation that was never created. Metadata only — no functional change."
         }
       ]
     },
@@ -586,7 +618,7 @@
         "doi": "10.1109/TKDE.2004.47",
         "bibtex": "@article{vanderaalst2004workflow,\n  title   = {Workflow Mining: Discovering Process Models from Event Logs},\n  author  = {van der Aalst, Wil M. P. and Weijters, Ton and Maruster, Laura},\n  journal = {IEEE Transactions on Knowledge and Data Engineering},\n  volume  = {16}, number = {9}, pages = {1128--1142}, year = {2004},\n  doi     = {10.1109/TKDE.2004.47}\n}"
       },
-      "homepage": "https://github.com/promenade-lab/alpha-miner",
+      "homepage": "https://github.com/promenade-pi/plugins/tree/main/alpha-miner-rs",
       "keywords": [
         "discovery",
         "petri-net",
@@ -624,6 +656,14 @@
           "bytes": 44450,
           "released": "2026-08-16",
           "changelog": "Ships a Changelog tab in the plugin's own detail panel — no algorithm change."
+        },
+        {
+          "version": "0.2.3",
+          "url": "packages/run.promenade.alpha-miner-0.2.3.pmplugin",
+          "sha256": "812052d98372be9d531b5fef7482310bce5792008ee8cdcb4cdf604d5ec18255",
+          "bytes": 44527,
+          "released": "2026-09-18",
+          "changelog": "Corrected the homepage/repository URLs: the plugins live in one repository, promenade-pi/plugins, not one repository per plugin under an organisation that was never created. Metadata only — no functional change."
         }
       ]
     },
@@ -937,7 +977,7 @@
           "orcid": "0000-0003-1350-6732"
         }
       ],
-      "homepage": "https://github.com/promenade-lab/dfg-rs",
+      "homepage": "https://github.com/promenade-pi/plugins/tree/main/dfg-rs",
       "keywords": [
         "dfg",
         "directly-follows",
@@ -975,6 +1015,14 @@
           "bytes": 113325,
           "released": "2026-08-25",
           "changelog": "Initial release: discovers a directly-follows graph from an event log — the frequency of every back-to-back activity pair within a case, plus per-case start/end activities and per-activity frequency."
+        },
+        {
+          "version": "0.1.1",
+          "url": "packages/run.promenade.dfg-rs-0.1.1.pmplugin",
+          "sha256": "3eadcab7f54d481bee4d088bde9d0478e1175570791ddd072b466c74752e6f09",
+          "bytes": 113587,
+          "released": "2026-09-18",
+          "changelog": "Corrected the homepage/repository URLs: the plugins live in one repository, promenade-pi/plugins, not one repository per plugin under an organisation that was never created. Metadata only — no functional change."
         }
       ]
     },
@@ -1089,7 +1137,7 @@
           "orcid": "0000-0003-1350-6732"
         }
       ],
-      "homepage": "https://github.com/promenade-lab/friction-topography",
+      "homepage": "https://github.com/promenade-pi/plugins/tree/main/friction-topography",
       "keywords": [
         "performance",
         "bottleneck",
@@ -1151,6 +1199,14 @@
           "bytes": 884718,
           "released": "2026-09-16",
           "changelog": "Switching palette no longer stalls the view. The two terrain rasters are painted pixel by pixel in JS and were repainted on every switch; they are now cached per palette, so returning to one you have already used costs nothing."
+        },
+        {
+          "version": "0.1.11",
+          "url": "packages/run.promenade.friction-topography-0.1.11.pmplugin",
+          "sha256": "7d317725f012624d312671f4f7cc1419c8ca1eb3dddc2168c8c10092846eb84e",
+          "bytes": 883707,
+          "released": "2026-09-18",
+          "changelog": "Corrected the homepage/repository URLs: the plugins live in one repository, promenade-pi/plugins, not one repository per plugin under an organisation that was never created. Metadata only — no functional change."
         }
       ]
     },
@@ -1267,7 +1323,7 @@
         "text": "Weijters, A.J.M.M., van der Aalst, W.M.P., de Medeiros, A.K.A. (2006). Process Mining with the Heuristics Miner Algorithm. BETA Working Paper Series, WP 166.",
         "bibtex": "@techreport{weijters2006heuristics,\n  title  = {Process Mining with the Heuristics Miner Algorithm},\n  author = {Weijters, A. J. M. M. and van der Aalst, W. M. P. and de Medeiros, A. K. Alves},\n  institution = {Eindhoven University of Technology},\n  series = {BETA Working Paper Series},\n  number = {WP 166},\n  year   = {2006}\n}"
       },
-      "homepage": "https://github.com/promenade-lab/heuristics-miner",
+      "homepage": "https://github.com/promenade-pi/plugins/tree/main/heuristics-miner-rs",
       "keywords": [
         "discovery",
         "causal-net",
@@ -1317,6 +1373,14 @@
           "bytes": 51446,
           "released": "2026-08-21",
           "changelog": "Adds Heuristics Miner → Petri net: inferred AND/XOR split and join groups become silent routing transitions in an Accepting Petri Net, ready for PNML export and alignment-based conformance."
+        },
+        {
+          "version": "0.2.1",
+          "url": "packages/run.promenade.heuristics-miner-0.2.1.pmplugin",
+          "sha256": "b8e8f0ef5a9d7a85b7d893b9681582b58481a2176b79d91ea6f3fa633def7d75",
+          "bytes": 51600,
+          "released": "2026-09-18",
+          "changelog": "Corrected the homepage/repository URLs: the plugins live in one repository, promenade-pi/plugins, not one repository per plugin under an organisation that was never created. Metadata only — no functional change."
         }
       ]
     },
@@ -1331,11 +1395,11 @@
         }
       ],
       "citation": {
-        "text": "Leemans, S.J.J., Fahland, D., van der Aalst, W.M.P. (2013). Discovering Block-Structured Process Models from Event Logs — A Constructive Approach. Petri Nets 2013, LNCS 7927, 311–329. Infrequent-behaviour variant: Leemans, Fahland, van der Aalst (2014), BPM Workshops 2013, LNBIP 171, 66–78.",
+        "text": "Leemans, S.J.J., Fahland, D., van der Aalst, W.M.P. (2013). Discovering Block-Structured Process Models from Event Logs — A Constructive Approach. Petri Nets 2013, LNCS 7927, 311–329. Infrequent-behavior variant: Leemans, Fahland, van der Aalst (2014), BPM Workshops 2013, LNBIP 171, 66–78.",
         "doi": "10.1007/978-3-642-38697-8_17",
         "bibtex": "@inproceedings{leemans2013inductive,\n  title     = {Discovering Block-Structured Process Models from Event Logs -- A Constructive Approach},\n  author    = {Leemans, Sander J. J. and Fahland, Dirk and van der Aalst, Wil M. P.},\n  booktitle = {Application and Theory of Petri Nets and Concurrency (Petri Nets 2013)},\n  series    = {LNCS},\n  volume    = {7927},\n  pages     = {311--329},\n  year      = {2013},\n  doi       = {10.1007/978-3-642-38697-8_17}\n}\n\n@inproceedings{leemans2014infrequent,\n  title     = {Discovering Block-Structured Process Models from Event Logs Containing Infrequent Behaviour},\n  author    = {Leemans, Sander J. J. and Fahland, Dirk and van der Aalst, Wil M. P.},\n  booktitle = {Business Process Management Workshops 2013},\n  series    = {LNBIP},\n  volume    = {171},\n  pages     = {66--78},\n  year      = {2014},\n  doi       = {10.1007/978-3-319-06257-0_6}\n}"
       },
-      "homepage": "https://github.com/promenade-lab/inductive-miner",
+      "homepage": "https://github.com/promenade-pi/plugins/tree/main/inductive-miner-rs",
       "keywords": [
         "discovery",
         "process-tree",
@@ -1378,6 +1442,14 @@
           "bytes": 115676,
           "released": "2026-08-17",
           "changelog": "\"Activity limit\" renamed to \"Distinct activities\": it read as though it capped events. There is no event limit here — every event is read, however many. The Road Traffic Fine Management log (561,470 events, 11 distinct activities) mines in 796 ms with nothing dropped. The pm4py plugin's \"Event limit\" is a different quantity: it truncates the log because pm4py holds it in memory as a DataFrame."
+        },
+        {
+          "version": "0.1.3",
+          "url": "packages/run.promenade.inductive-miner-0.1.3.pmplugin",
+          "sha256": "2da3979279e32b7e8af28f9ef5e28a517b3477ea54079808a183134e01746248",
+          "bytes": 115909,
+          "released": "2026-09-18",
+          "changelog": "Corrected the homepage/repository URLs: the plugins live in one repository, promenade-pi/plugins, not one repository per plugin under an organisation that was never created. Metadata only — no functional change."
         }
       ]
     },
@@ -1865,6 +1937,14 @@
           "sha256": "01169e721fd1223bdf223e2b184424f05b0c55dc256dc73280489085689a87d6",
           "bytes": 115501,
           "changelog": "Completes the 0.1.2 fix: `objectType` now has a static default and the projection treats an empty value as \"the single most frequent object type\", so running the action straight from the actions list — where a data-bound default never resolves — always binds it."
+        },
+        {
+          "version": "0.1.4",
+          "url": "packages/run.promenade.lpm-0.1.4.pmplugin",
+          "sha256": "8aca38515a05e4c7d27587b06359cda5886655b9cec50170ae55b03da780f51c",
+          "bytes": 115440,
+          "released": "2026-09-18",
+          "changelog": "Corrected the homepage/repository URLs: the plugins live in one repository, promenade-pi/plugins, not one repository per plugin under an organisation that was never created. Metadata only — no functional change."
         }
       ]
     },
@@ -2045,7 +2125,7 @@
           "orcid": "0000-0003-1350-6732"
         }
       ],
-      "homepage": "https://github.com/promenade-lab/metro-station",
+      "homepage": "https://github.com/promenade-pi/plugins/tree/main/metro-station",
       "keywords": [
         "object-centric",
         "metro-map",
@@ -2094,6 +2174,14 @@
           "bytes": 561309,
           "released": "2026-09-06",
           "changelog": "Lift cars. Each shaft now runs a car — instanced primitives, one passenger per object type on that hand-off, in that type’s own color. A car only ever descends, at constant speed so a longer wait is a visibly longer journey, and then beams back to the top with a flash rather than climbing: height here is elapsed time, so a rising car would be a case travelling backwards through the process. Shafts gained a minimum radius (set in the kernel, where the clearance invariants can see it), a machine room, a pit and a hoist cable. Also fixes two layout defects the invariants caught: column pitch is now per-column instead of one global maximum, and the corridor allocator centers each group of overlapping claims rather than a whole corridor. wasm change: Remove+reinstall."
+        },
+        {
+          "version": "0.2.1",
+          "url": "packages/run.promenade.metro-station-0.2.1.pmplugin",
+          "sha256": "2490aa6a122616d7f74e3f3c4110cfbd473e8f7f489a6b144125c60d0fe0f355",
+          "bytes": 561529,
+          "released": "2026-09-18",
+          "changelog": "Corrected the homepage/repository URLs: the plugins live in one repository, promenade-pi/plugins, not one repository per plugin under an organisation that was never created. Metadata only — no functional change."
         }
       ]
     },
