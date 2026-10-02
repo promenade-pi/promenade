@@ -5,6 +5,7 @@ import { resultStore } from './results';
 import { colorRegistry } from '../services/colors';
 import { paramTypeSchemasFrom } from '../relational/paramBinding';
 import { buildLogRelations } from '../artifact/log-rows';
+import { buildTableRelations } from '../artifact/table-rows';
 import { SupersededError } from './types';
 import type { ActionContext, ActionDef, ActionOutcome } from './types';
 import type {
@@ -275,6 +276,23 @@ export async function executeAction(args: ExecuteActionArgs): Promise<ExecuteAct
         id, name, type, createdAt: new Date().toISOString(),
         storage: storage as Artifact['storage'], meta: { ...meta, ...(extraMeta ?? {}) },
         producedBy: null, inputs: Object.values(logInputs).flat(),
+      };
+    },
+    persistTable: async ({ type, name, relations, schema, inputs: tableInputs, meta: extraMeta }) => {
+      const id = newId('a');
+      // Checked here, written by the worker — the same split as `persistLog`'s
+      // `rows` form. What differs is only where the schema comes from: the
+      // plugin declared this one, so it travels with the call instead of being
+      // looked up in the host's own registry.
+      const built = buildTableRelations(type, schema, relations);
+      const { storage, meta } = await dataClient.materializeTable({
+        id, targetType: type, relations: built.relations,
+      });
+      return {
+        id, name, type, createdAt: new Date().toISOString(),
+        storage: storage as Artifact['storage'],
+        meta: { ...meta, ...(extraMeta ?? {}) },
+        producedBy: null, inputs: Object.values(tableInputs).flat(),
       };
     },
   };

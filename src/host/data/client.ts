@@ -247,6 +247,24 @@ export class DataClient {
     );
   }
 
+  /**
+   * Writes a table-shaped artifact from columns an action computed — a
+   * feature matrix, a metrics table. The wire counterpart of
+   * `ActionContext.persistTable`; `host/artifact/table-rows.ts` builds and
+   * checks the Arrow tables this sends, and `materializeTable` (see
+   * `worker/data-worker.ts`) turns them into physical storage.
+   */
+  materializeTable(request: {
+    id: string;
+    targetType: string;
+    /** Relation name -> Arrow IPC bytes. */
+    relations: Record<string, Uint8Array>;
+  }) {
+    return this.call<{ storage: unknown; meta: Record<string, unknown> }>(
+      'materializeTable', request
+    );
+  }
+
   /** Writes an artifact (and optionally its execution) into the catalog. */
   putArtifact(artifact: Artifact, execution?: unknown) {
     return this.call<{ catalog: ProvenanceGraph; quota: any }>(

@@ -2,12 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent, FocusEvent as ReactFocusEvent, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 import type { Artifact, ProvenanceGraph } from '../../host/artifact/types';
 import {
-  OP_GROUP, OP_LABEL, describeOp, isComplete, newOp,
+  OP_GROUP, OP_LABEL, describeOp, isComplete, newOp, regexProblem,
   type ObjectSplitRule, type RelationCountCondition, type TransformOp, type TransformOpKind,
   type ValueScope,
 } from '../../host/transform/types';
 import { exportOperation, exportPlan, importOperations } from '../../host/transform/serialization';
 import { fmtCount } from '../format';
+import { Combobox } from '../Combobox';
+import { FlattenImpact } from './FlattenImpact';
 import { num, useQuery } from './useQuery';
 import { tableOf } from './tableName';
 import {
@@ -199,9 +201,8 @@ export function TransformEditor({
       )}
       {ops.some((o) => o.kind === 'flattenByObjectType' && !o.disabled && !!o.objectType) && (
         <div className="why">
-          Flattening is lossy in both directions: an event related to several
-          objects of this type is duplicated, and an event related to none is
-          dropped. The event count above shows the net effect.
+          Flattening impact preview below — the net event count above hides both
+          the events this case notion duplicates and the ones it drops.
         </div>
       )}
 
@@ -446,7 +447,7 @@ function OpForm({
           </select>
           {op.column === 'activity' && op.op !== 'contains' ? (
             <ActivityInput artifact={artifact} value={op.value}
-                           onChange={(v) => onChange({ value: v } as any)} placeholder="value" />
+                           onChange={(v) => onChange({ value: v } as any)} placeholder="activity" />
           ) : (
             <input value={op.value} placeholder="value"
                    onChange={(e) => onChange({ value: e.target.value } as any)} />
@@ -492,6 +493,17 @@ function OpForm({
         </div>
       );
 
+    case 'keepCases':
+      // No form: the set came from an analysis, and the only honest edit here
+      // is to disable or delete the step. `describeOp` names it in the head.
+      return (
+        <div className="why">
+          {op.traces.length} case{op.traces.length === 1 ? '' : 's'} selected by
+          {op.label ? ` “${op.label}”` : ' a plugin'}, kept by their ingest case number.
+          Editing the set means going back to the analysis that chose it.
+        </div>
+      );
+
     case 'variantMinCases':
       return (
         <div className="tf-form">
@@ -503,13 +515,12 @@ function OpForm({
       );
 
     case 'flattenByObjectType':
+      // The picker lives inside the impact panel rather than beside it: the
+      // measurement is the reason to choose one type over another, so the two
+      // are one control, not a control and a report.
       return (
-        <div className="tf-form">
-          <span className="tf-word">one case per</span>
-          <ObjectTypeInput artifact={artifact} value={op.objectType}
-                           onChange={(v) => onChange({ objectType: v } as any)} />
-          <span className="tf-word">object</span>
-        </div>
+        <FlattenImpact artifact={artifact} objectType={op.objectType}
+                       onChange={(v) => onChange({ objectType: v } as any)} />
       );
 
     case 'removeAttribute':
@@ -776,15 +787,14 @@ function EntityMergeForm({
   const toggle = (value: string) => onChange({
     sources: sources.includes(value) ? sources.filter((source) => source !== value) : [...sources, value],
   });
-  const listId = `merge-${entity.replace(' ', '-')}-${artifact.id}`;
   return (
     <div className="tf-merge-form">
       <div className="tf-merge-target">
         <label>
           <span>Target {entity}</span>
-          <input list={listId} value={target} placeholder={`Choose or name the merged ${entity}`}
-                 onChange={(e) => onChange({ target: e.target.value })} />
-          <datalist id={listId}>{(rows ?? []).map((row) => <option key={String(row.value)} value={String(row.value)} />)}</datalist>
+          <Combobox value={target} placeholder={`Choose or name the merged ${entity}`}
+                    options={(rows ?? []).map((row) => ({ value: String(row.value), detail: fmtCount(Number(row.n)) }))}
+                    onChange={(v) => onChange({ target: v })} />
         </label>
         <span className="param-hint">Every selected {entity} is relabelled as the target. Event/object rows stay separate; no numeric or string attribute values are combined, and their order is unchanged.</span>
       </div>
@@ -871,7 +881,6 @@ function SplitObjectTypeForm({ artifact, op, onChange }: {
     e.target.select();
     setRule(i, { target: rule.value });
   };
-  const typesListId = `split-types-${artifact.id}`;
 
   return (
     <div className="tf-split-form">
@@ -913,9 +922,10 @@ function SplitObjectTypeForm({ artifact, op, onChange }: {
               <input value={rule.value} placeholder="e.g. BAGGAGE_CONVEYOR"
                      onChange={(e) => setRule(i, { value: e.target.value })} />
               <span className="tf-arrow">→</span>
-              <input list={typesListId} value={rule.target} placeholder="new or existing type"
-                     onFocus={(e) => prefillTarget(i, rule, e)}
-                     onChange={(e) => setRule(i, { target: e.target.value })} />
+              <Combobox value={rule.target} placeholder="new or existing type"
+                        options={(types ?? []).map((t) => ({ value: String(t.object_type) }))}
+                        onFocus={(e) => prefillTarget(i, rule, e)}
+                        onChange={(v) => setRule(i, { target: v })} />
               <span className="tf-split-count">
                 {counts && idx != null ? fmtCount(Number(counts[`r${idx}`] ?? 0)) : '—'}
               </span>
@@ -926,7 +936,6 @@ function SplitObjectTypeForm({ artifact, op, onChange }: {
           );
         })}
       </div>
-      <datalist id={typesListId}>{(types ?? []).map((t) => <option key={String(t.object_type)} value={String(t.object_type)} />)}</datalist>
       <button type="button" className="tf-split-add" onClick={addRule}>+ Add rule</button>
 
       <div className="param-hint">
@@ -1119,7 +1128,33 @@ function DualRange({ min, max, onChange }: {
 }
 
 type AttributeOp = Extract<TransformOp, { kind: 'filterEventAttribute' | 'filterObjectAttribute' }>;
+type AttributeMode = AttributeOp['mode'];
 
+const ATTRIBUTE_MODE_GROUPS: { label: string; kind: 'any' | 'text' | 'number' | 'date'; modes: [AttributeMode, string][] }[] = [
+  { label: 'Presence', kind: 'any', modes: [['has', 'is present'], ['missing', 'is missing']] },
+  { label: 'Value', kind: 'text', modes: [
+    ['equals', 'equals'], ['notEquals', 'does not equal'],
+    ['oneOf', 'is one of'], ['noneOf', 'is none of'],
+    ['contains', 'contains'], ['notContains', 'does not contain'],
+    ['startsWith', 'starts with'], ['endsWith', 'ends with'], ['regex', 'matches regex'],
+  ] },
+  { label: 'Number', kind: 'number', modes: [['atLeast', 'is at least'], ['atMost', 'is at most'], ['numberRange', 'is between']] },
+  { label: 'Date', kind: 'date', modes: [['onOrAfter', 'is on or after'], ['onOrBefore', 'is on or before'], ['dateRange', 'is between dates']] },
+];
+
+const VALUE_PICKER_LIMIT = 200;
+
+/** `YYYY-MM-DDTHH:mm`, which is both what `<input type="datetime-local">` takes and a TIMESTAMP literal DuckDB reads as UTC. */
+const toLocalInput = (iso: unknown) => (iso == null ? '' : new Date(String(iso)).toISOString().slice(0, 16));
+
+/**
+ * One attribute test. Once a known attribute is named, it is profiled — how
+ * many of its values read as numbers, how many as dates, and its most common
+ * values — and the editor uses that to offer only the comparisons that can
+ * mean something: the Number group appears for an attribute with numeric
+ * values, the Date group for one with date values. A mode already chosen is
+ * never hidden, so a saved operation always shows what it does.
+ */
 function AttributeFilter({
   artifact, scope, isOcel, op, onChange,
 }: {
@@ -1131,34 +1166,209 @@ function AttributeFilter({
 }) {
   const logical = scope === 'event' ? 'event_attr' : scope === 'object' ? 'object_attr' : 'trace_attr';
   const keyColumn = isOcel && scope !== 'trace' ? 'name' : 'key';
-  const { rows } = useQuery<{ key: string; n: number }>(
-    `SELECT ${keyColumn} AS key, COUNT(*) AS n FROM ${tableOf(artifact.id, logical)} GROUP BY 1 ORDER BY n DESC LIMIT 300`,
-    [artifact.id, logical, keyColumn]
-  );
-  const listId = `filter-attrs-${artifact.id}-${scope}`;
+  const table = tableOf(artifact.id, logical);
+  // Attributes belong to a type — an activity, or an OCEL object type — and
+  // the same name on two types is two different attributes. Case attributes
+  // have no type to scope by.
+  const typed = scope === 'event' || scope === 'object';
+  const entity = scope === 'event'
+    ? { table: tableOf(artifact.id, 'event'), id: isOcel ? 'event_id' : 'event_idx', type: 'activity', noun: 'activity' }
+    : { table: tableOf(artifact.id, 'object'), id: 'object_id', type: 'object_type', noun: 'object type' };
+  const typeField = scope === 'event' ? 'activity' : 'objectType';
+  const chosenType: string = (scope === 'event' ? (op as any).activity : scope === 'object' ? (op as any).objectType : undefined) ?? '';
+  const sqlLit = (v: string) => `'${v.replace(/'/g, "''")}'`;
+  const fromAttr = typed
+    ? `${table} a JOIN ${entity.table} x ON x.${entity.id} = a.${entity.id}`
+    : `${table} a`;
+
+  // One row per (type, attribute): enough to list a type's attributes and to
+  // notice when a name is shared by several types with different value kinds.
+  const { rows: keyRows } = useQuery<{ key: string; t: string | null; n: number; numeric_n: number; date_n: number }>(`
+    SELECT a.${keyColumn} AS key, ${typed ? `x.${entity.type}` : 'CAST(NULL AS VARCHAR)'} AS t, COUNT(*) AS n,
+           COUNT(TRY_CAST(a.value AS DOUBLE)) AS numeric_n, COUNT(TRY_CAST(a.value AS TIMESTAMP)) AS date_n
+    FROM ${fromAttr} WHERE a.${keyColumn} IS NOT NULL GROUP BY 1, 2 ORDER BY n DESC LIMIT 5000
+  `, [artifact.id, logical, keyColumn, typed]);
+  const byKey = new Map<string, { t: string | null; n: number; numeric_n: number; date_n: number }[]>();
+  for (const r of keyRows ?? []) {
+    const k = String(r.key);
+    if (!byKey.has(k)) byKey.set(k, []);
+    byKey.get(k)!.push({ t: r.t == null ? null : String(r.t), n: num(r.n), numeric_n: num(r.numeric_n), date_n: num(r.date_n) });
+  }
+  const typeOptions = (() => {
+    const counts = new Map<string, number>();
+    for (const r of keyRows ?? []) if (r.t != null) counts.set(String(r.t), (counts.get(String(r.t)) ?? 0) + 1);
+    if (chosenType && !counts.has(chosenType)) counts.set(chosenType, 0);
+    return [...counts].sort((a, b) => a[0].localeCompare(b[0]));
+  })();
+  const keyOptions = [...byKey]
+    .map(([k, per]) => {
+      const mine = chosenType ? per.filter((p) => p.t === chosenType) : per;
+      const n = mine.reduce((sum, p) => sum + p.n, 0);
+      return { key: k, n, types: mine.length };
+    })
+    .filter((o) => o.n > 0)
+    .sort((a, b) => b.n - a.n);
+  // Profile only a key that exists for the chosen type — not one query per keystroke of a half-typed name.
+  const known = !!op.key && keyOptions.some((o) => o.key === op.key);
+  // The same name on several types, with no type chosen: the test would apply to all of them.
+  const sharedBy = !chosenType && typed ? (byKey.get(op.key) ?? []).filter((p) => p.t != null) : [];
+  const kindOf = (p: { n: number; numeric_n: number; date_n: number }) =>
+    p.numeric_n === p.n ? 'numeric' : p.date_n === p.n ? 'dates' : p.numeric_n || p.date_n ? 'mixed' : 'text';
+
+  const where = `a.${keyColumn} = ${sqlLit(op.key)}${typed && chosenType ? ` AND x.${entity.type} = ${sqlLit(chosenType)}` : ''}`;
+  const profile = useQuery<{
+    n: number; distinct_n: number; numeric_n: number; num_min: number | null; num_max: number | null;
+    date_n: number; date_min: string | null; date_max: string | null;
+  }>(known ? `
+    SELECT COUNT(*) AS n, COUNT(DISTINCT a.value) AS distinct_n,
+           COUNT(TRY_CAST(a.value AS DOUBLE)) AS numeric_n,
+           MIN(TRY_CAST(a.value AS DOUBLE)) AS num_min, MAX(TRY_CAST(a.value AS DOUBLE)) AS num_max,
+           COUNT(TRY_CAST(a.value AS TIMESTAMP)) AS date_n,
+           CAST(MIN(TRY_CAST(a.value AS TIMESTAMP)) AS VARCHAR) AS date_min,
+           CAST(MAX(TRY_CAST(a.value AS TIMESTAMP)) AS VARCHAR) AS date_max
+    FROM ${fromAttr} WHERE ${where}
+  ` : null, [artifact.id, logical, op.key, chosenType, known]).rows?.[0];
+  const topValues = useQuery<{ value: string; n: number }>(known ? `
+    SELECT CAST(a.value AS VARCHAR) AS value, COUNT(*) AS n FROM ${fromAttr}
+    WHERE ${where} AND a.value IS NOT NULL
+    GROUP BY 1 ORDER BY n DESC, 1 LIMIT ${VALUE_PICKER_LIMIT}
+  ` : null, [artifact.id, logical, op.key, chosenType, known]).rows;
+  const [valueSearch, setValueSearch] = useState('');
+
+  const numericN = profile ? num(profile.numeric_n) : 0;
+  const dateN = profile ? num(profile.date_n) : 0;
+  const totalN = profile ? num(profile.n) : 0;
+  const distinctN = profile ? num(profile.distinct_n) : 0;
+  const groupShown = (kind: 'any' | 'text' | 'number' | 'date') =>
+    kind === 'any' || kind === 'text' || !profile
+    || (kind === 'number' ? numericN > 0 : dateN > 0)
+    || ATTRIBUTE_MODE_GROUPS.find((g) => g.kind === kind)!.modes.some(([m]) => m === op.mode);
+
   const subject = scope === 'event' ? 'event' : scope === 'object' ? 'object' : 'case';
+  const negative = op.mode === 'missing' || op.mode === 'notEquals' || op.mode === 'noneOf' || op.mode === 'notContains';
+  const picked = op.values ?? [];
+  const togglePicked = (v: string) =>
+    onChange({ values: picked.includes(v) ? picked.filter((x) => x !== v) : [...picked, v] });
+  const regexError = op.mode === 'regex' && op.value ? regexProblem(op.value) : null;
+  const numberInput = (field: 'min' | 'max', placeholder: string) => (
+    <input type="number" value={op[field] ?? ''} placeholder={placeholder}
+           onChange={(e) => onChange({ [field]: e.target.value === '' ? undefined : Number(e.target.value) })} />
+  );
+  const dateInput = (field: 'from' | 'to') => (
+    <input type="datetime-local" value={op[field] ?? ''}
+           min={field === 'from' ? undefined : op.from || undefined}
+           onChange={(e) => onChange({ [field]: e.target.value || undefined })} />
+  );
+
   return (
     <div className="tf-attribute-filter">
       <div className="tf-form">
-        <span className="tf-word">keep {subject}s whose attribute</span>
-        <input list={listId} value={op.key} placeholder="attribute name"
-               onChange={(e) => onChange({ key: e.target.value })} />
-        <datalist id={listId}>{(rows ?? []).map((r) => <option key={String(r.key)} value={String(r.key)}>{fmtCount(Number(r.n))} values</option>)}</datalist>
-        <select value={op.mode} onChange={(e) => onChange({ mode: e.target.value as AttributeOp['mode'] })}>
-          <option value="has">is present</option>
-          <option value="equals">equals</option>
-          <option value="contains">contains</option>
-          <option value="numberRange">is in number range</option>
-        </select>
-        {op.mode === 'numberRange' ? <>
-          <input type="number" value={op.min ?? ''} placeholder="minimum" onChange={(e) => onChange({ min: e.target.value === '' ? undefined : Number(e.target.value) })} />
-          <span className="tf-arrow">–</span>
-          <input type="number" value={op.max ?? ''} placeholder="maximum" onChange={(e) => onChange({ max: e.target.value === '' ? undefined : Number(e.target.value) })} />
-        </> : op.mode !== 'has' && (
-          <input value={op.value} placeholder="value" onChange={(e) => onChange({ value: e.target.value })} />
+        <span className="tf-word">keep {subject}s{typed ? ' of' : ''}</span>
+        {typed && (
+          <select value={chosenType} aria-label={entity.noun}
+                  onChange={(e) => onChange({ [typeField]: e.target.value || undefined } as Partial<AttributeOp>)}>
+            <option value="">any {entity.noun}</option>
+            {typeOptions.map(([t, nKeys]) => (
+              <option key={t} value={t}>{t}{nKeys ? ` (${nKeys} attribute${nKeys === 1 ? '' : 's'})` : ''}</option>
+            ))}
+          </select>
         )}
+        <span className="tf-word">whose attribute</span>
+        <Combobox strict value={op.key} placeholder="Choose attribute" ariaLabel="Attribute"
+                  missingLabel={chosenType ? `not an attribute of ${chosenType}` : 'not in this log'}
+                  options={keyOptions.map((o) => ({
+                    value: o.key,
+                    detail: `${fmtCount(o.n)} values${o.types > 1 ? ` · ${o.types} ${entity.noun === 'activity' ? 'activities' : 'object types'}` : ''}`,
+                  }))}
+                  onChange={(v) => onChange({ key: v })} />
+        <select value={op.mode} onChange={(e) => onChange({ mode: e.target.value as AttributeMode })}>
+          {ATTRIBUTE_MODE_GROUPS.filter((g) => groupShown(g.kind)).map((g) => (
+            <optgroup key={g.label} label={g.label}>
+              {g.modes.map(([mode, label]) => <option key={mode} value={mode}>{label}</option>)}
+            </optgroup>
+          ))}
+        </select>
+        {(op.mode === 'equals' || op.mode === 'notEquals' || op.mode === 'contains' || op.mode === 'notContains'
+          || op.mode === 'startsWith' || op.mode === 'endsWith' || op.mode === 'regex') && <>
+          {op.mode === 'regex'
+            ? <input value={op.value} placeholder="pattern" aria-invalid={!!regexError}
+                     onChange={(e) => onChange({ value: e.target.value })} />
+            : <Combobox value={op.value} placeholder="value" ariaLabel="Value"
+                        options={(topValues ?? []).map((r) => ({ value: r.value, detail: fmtCount(num(r.n)) }))}
+                        onChange={(v) => onChange({ value: v })} />}
+        </>}
+        {op.mode === 'atLeast' && numberInput('min', 'minimum')}
+        {op.mode === 'atMost' && numberInput('max', 'maximum')}
+        {op.mode === 'numberRange' && <>
+          {numberInput('min', 'minimum')}<span className="tf-arrow">–</span>{numberInput('max', 'maximum')}
+        </>}
+        {op.mode === 'onOrAfter' && dateInput('from')}
+        {op.mode === 'onOrBefore' && dateInput('to')}
+        {op.mode === 'dateRange' && <>{dateInput('from')}<span className="tf-arrow">→</span>{dateInput('to')}</>}
       </div>
-      <div className="param-hint">Attribute values are evaluated on the current transformation stage; numeric ranges safely ignore non-numeric values.</div>
+
+      {sharedBy.length > 1 && (
+        <div className="tf-shared-attr">
+          <b>{op.key}</b> is an attribute of {sharedBy.length} {entity.noun === 'activity' ? 'activities' : 'object types'}, tested together here
+          {' '}— and {subject}s of any other {entity.noun} are dropped. Filter one:
+          <span className="tf-shared-attr-types">
+            {sharedBy.map((p) => (
+              <button key={p.t!} type="button" className="chip"
+                      onClick={() => onChange({ [typeField]: p.t! } as Partial<AttributeOp>)}>
+                {p.t} <small>{fmtCount(p.n)} · {kindOf(p)}</small>
+              </button>
+            ))}
+          </span>
+        </div>
+      )}
+
+      {(op.mode === 'oneOf' || op.mode === 'noneOf') && (
+        <div className="tf-edit-attributes">
+          <div className="tf-edit-attr-toolbar">
+            <span>{picked.length ? `${picked.length} selected` : 'Pick the values'}{distinctN > VALUE_PICKER_LIMIT ? ` · ${VALUE_PICKER_LIMIT} most common of ${fmtCount(distinctN)} shown` : ''}</span>
+            {(topValues?.length ?? 0) > 10 && (
+              <input value={valueSearch} placeholder="Search values…" onChange={(e) => setValueSearch(e.target.value)} />
+            )}
+            {picked.length > 0 && <button onClick={() => onChange({ values: [] })}>Clear</button>}
+          </div>
+          {!known ? <div className="param-hint">Name an attribute of this log to list its values.</div> : (
+            <div className="tf-edit-attr-list">
+              {/* Picked values first and always, even ones the top-N cut or the search hides. */}
+              {[...new Set([...picked, ...(topValues ?? []).map((r) => r.value)])]
+                .filter((v) => picked.includes(v) || v.toLowerCase().includes(valueSearch.toLowerCase()))
+                .map((v) => {
+                  const n = topValues?.find((r) => r.value === v)?.n;
+                  return <label key={v}>
+                    <input type="checkbox" checked={picked.includes(v)} onChange={() => togglePicked(v)} />
+                    <span title={v}>{v === '' ? '(empty)' : v}</span><small>{n == null ? '' : fmtCount(num(n))}</small>
+                  </label>;
+                })}
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="param-hint">
+        {regexError ? <span className="err">Invalid pattern: {regexError}</span> : <>
+          {profile && totalN > 0 && <>
+            {fmtCount(totalN)} values, {fmtCount(distinctN)} distinct
+            {numericN > 0 && ` · ${numericN === totalN ? 'all' : fmtCount(numericN)} numeric, ${profile.num_min}–${profile.num_max}`}
+            {dateN > 0 && ` · ${dateN === totalN ? 'all' : fmtCount(dateN)} dates, ${toLocalInput(profile.date_min).replace('T', ' ')} → ${toLocalInput(profile.date_max).replace('T', ' ')}`}
+            {'. '}
+          </>}
+          {negative
+            ? `Also keeps ${subject}s that don’t have this attribute at all.`
+            : op.mode === 'atLeast' || op.mode === 'atMost' || op.mode === 'numberRange'
+              ? 'Values that are not numbers never match.'
+              : op.mode === 'onOrAfter' || op.mode === 'onOrBefore' || op.mode === 'dateRange'
+                ? 'Times are UTC; values that are not dates never match.'
+                : op.mode === 'regex' ? 'Case-sensitive; start the pattern with (?i) to ignore case.'
+                  : op.mode === 'contains' || op.mode === 'startsWith' || op.mode === 'endsWith' ? 'Ignores case.'
+                    : op.mode === 'equals' || op.mode === 'oneOf' ? 'Exact match, case included.' : ''}
+          {typed && chosenType && ` ${subject[0].toUpperCase()}${subject.slice(1)}s of every other ${entity.noun} are kept.`}
+          {scope === 'object' && ' An object with several recorded values matches if any of them does.'}
+        </>}
+      </div>
     </div>
   );
 }
@@ -1558,12 +1768,13 @@ function TimeRangeFilter({ artifact, op, onChange }: {
 }
 
 /**
- * Free text plus the real values from the log.
+ * One of the log's activities, picked from the log itself.
  *
- * A plain enum would be wrong here — the values are data, not a fixed
- * vocabulary — and a plain text box would make the user retype names they can
- * see in another panel. This is the same idea as `optionsFrom` on action
- * parameters, applied to a host view.
+ * Every caller asks "which activity?" ("is", "is not", "cases that contain"),
+ * where a name the log doesn't have would silently match nothing — so this is
+ * a searchable select over the queried activities, not a text box. The
+ * fragment-matching "contains" form keeps a plain field instead. Same idea as
+ * `optionsFrom` on action parameters, applied to a host view.
  */
 function ActivityInput({
   artifact, value, onChange, placeholder,
@@ -1575,41 +1786,13 @@ function ActivityInput({
      GROUP BY 1 ORDER BY n DESC LIMIT 300`,
     [artifact.id]
   );
-  const listId = `acts-${artifact.id}`;
   return (
-    <>
-      <input list={listId} value={value} placeholder={placeholder}
-             onChange={(e) => onChange(e.target.value)} />
-      <datalist id={listId}>
-        {(rows ?? []).map((r) => <option key={String(r.activity)} value={String(r.activity)} />)}
-      </datalist>
-    </>
+    <Combobox strict value={value} placeholder={placeholder ? `Choose ${placeholder}` : 'Choose activity'} onChange={onChange}
+              options={(rows ?? []).map((r) => ({ value: String(r.activity), detail: fmtCount(num((r as any).n)) }))} />
   );
 }
 
 /** Object types of the source log, queried rather than declared. */
-function ObjectTypeInput({
-  artifact, value, onChange,
-}: {
-  artifact: Artifact; value: string; onChange: (v: string) => void;
-}) {
-  const { rows } = useQuery<{ object_type: string }>(
-    `SELECT object_type, COUNT(*) AS n FROM ${tableOf(artifact.id, 'object')}
-     GROUP BY 1 ORDER BY n DESC LIMIT 300`,
-    [artifact.id]
-  );
-  const listId = `otypes-${artifact.id}`;
-  return (
-    <>
-      <input list={listId} value={value} placeholder="object type"
-             onChange={(e) => onChange(e.target.value)} />
-      <datalist id={listId}>
-        {(rows ?? []).map((r) => <option key={String(r.object_type)} value={String(r.object_type)} />)}
-      </datalist>
-    </>
-  );
-}
-
 function AttributeInput({
   artifact, scope, value, isOcel, onChange,
 }: {
@@ -1625,15 +1808,9 @@ function AttributeInput({
      GROUP BY 1 ORDER BY n DESC LIMIT 300`,
     [artifact.id, scope, isOcel]
   );
-  const listId = `attrs-${artifact.id}-${scope}`;
   return (
-    <>
-      <input list={listId} value={value} placeholder="attribute key"
-             onChange={(e) => onChange(e.target.value)} />
-      <datalist id={listId}>
-        {(rows ?? []).map((r) => <option key={String(r.key)} value={String(r.key)} />)}
-      </datalist>
-    </>
+    <Combobox strict value={value} placeholder="Choose attribute" onChange={onChange}
+              options={(rows ?? []).map((r) => ({ value: String(r.key), detail: fmtCount(num((r as any).n)) }))} />
   );
 }
 

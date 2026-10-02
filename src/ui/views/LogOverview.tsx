@@ -41,12 +41,25 @@ function normalizedEntropy(counts: number[]): number | null {
   return entropy / Math.log2(counts.length);
 }
 
-function StatCard({ value, label }: { value: string; label: string }) {
+type OpenView = (artifactId: string, viewId?: string, params?: Record<string, unknown>) => unknown;
+
+/** A stat tile that doubles as a shortcut into the view behind the number —
+ * the same move the OCEL Inspector's Overview tiles make. Opening an already
+ * open view focuses it instead of adding a second panel. */
+function StatCard({ value, label, onOpen }: { value: string; label: string; onOpen?: () => void }) {
+  if (!onOpen) {
+    return (
+      <div className="ov-stat">
+        <div className="ov-stat-value">{value}</div>
+        <div className="ov-stat-label">{label}</div>
+      </div>
+    );
+  }
   return (
-    <div className="ov-stat">
+    <button type="button" className="ov-stat ov-stat--link" onClick={onOpen} title={`Open ${label}`}>
       <div className="ov-stat-value">{value}</div>
-      <div className="ov-stat-label">{label}</div>
-    </div>
+      <div className="ov-stat-label ov-stat-label--link">{label}<span className="ov-stat-arrow">→</span></div>
+    </button>
   );
 }
 
@@ -140,7 +153,9 @@ function BreakdownCard({
   );
 }
 
-export function LogOverview({ artifact, panelId }: { artifact: Artifact; panelId: string }) {
+export function LogOverview({ artifact, panelId, onOpenView }: { artifact: Artifact; panelId: string; onOpenView?: OpenView }) {
+  const open = (viewId: string, params?: Record<string, unknown>) =>
+    onOpenView ? () => { onOpenView(artifact.id, viewId, params); } : undefined;
   const eventT = tableOf(artifact.id, 'event');
   const traceT = tableOf(artifact.id, 'trace');
   const eventAttrT = tableOf(artifact.id, 'event_attr');
@@ -301,10 +316,10 @@ export function LogOverview({ artifact, panelId }: { artifact: Artifact; panelId
   return (
     <div className="view">
       <div className="ov-stat-grid">
-        <StatCard value={c ? fmtCount(num(c.cases)) : '…'} label="Cases" />
-        <StatCard value={c ? fmtCount(num(c.events)) : '…'} label="Events" />
-        <StatCard value={c ? fmtCount(num(c.activities)) : '…'} label="Activities" />
-        <StatCard value={vc ? fmtCount(num(vc.variants)) : '…'} label="Variants" />
+        <StatCard value={c ? fmtCount(num(c.cases)) : '…'} label="Cases" onOpen={open('core.traceExplorer', { tab: 'cases' })} />
+        <StatCard value={c ? fmtCount(num(c.events)) : '…'} label="Events" onOpen={open('core.eventTable')} />
+        <StatCard value={c ? fmtCount(num(c.activities)) : '…'} label="Activities" onOpen={open('core.activityTable')} />
+        <StatCard value={vc ? fmtCount(num(vc.variants)) : '…'} label="Variants" onOpen={open('core.traceExplorer', { tab: 'variants' })} />
       </div>
 
       <div className="ov-card">

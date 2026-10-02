@@ -1,4 +1,4 @@
-import { isComplete, type TransformOp, type ValueScope } from './types.ts';
+import { NEGATED_ATTRIBUTE_MODE, isComplete, type AttributeFilterMode, type TransformOp, type ValueScope } from './types.ts';
 
 /**
  * Compiles a transform plan into DuckDB views.
@@ -17,6 +17,11 @@ import { isComplete, type TransformOp, type ValueScope } from './types.ts';
 
 const LOGICAL = ['event', 'event_attr', 'trace', 'trace_attr'] as const;
 type Logical = string;
+
+/** Makes `%`, `_` and `\` in user text literal inside a LIKE pattern. */
+function likeEscape(v: string): string {
+  return v.replace(/[\\%_]/g, (c) => `\\${c}`);
+}
 
 /** Single-quote escaping. All values here come from the parameter form. */
 function lit(v: string): string {
@@ -265,18 +270,49 @@ export function compilePlan(
     `SELECT ${column} AS value, COUNT(*) AS n FROM ${table} GROUP BY 1` +
     `) frequencies WHERE n * 100.0 / NULLIF(MAX(n) OVER (), 0) BETWEEN ${Math.max(0, min)} AND ${Math.min(100, max)})`;
 
-  const attributePredicate = (
+  /**
+   * The ids of the entities carrying a value of `op.key` that passes the test,
+   * and whether the caller should keep those (`negate: false`) or everything
+   * else. A negative mode is compiled as its positive twin plus `NOT IN`, so
+   * "does not equal X" also keeps entities without the attribute at all — see
+   * `AttributeFilterMode`.
+   */
+  const attributeHits = (
     table: string, keyColumn: string, idColumn: string,
     op: Extract<TransformOp, { kind: 'filterEventAttribute' | 'filterObjectAttribute' }>,
-  ) => {
+  ): { hits: string; negate: boolean } => {
+    const positive: AttributeFilterMode = NEGATED_ATTRIBUTE_MODE[op.mode] ?? op.mode;
     const parts = [`${keyColumn} = ${lit(op.key)}`];
-    if (op.mode === 'equals') parts.push(`value = ${lit(op.value)}`);
-    else if (op.mode === 'contains') parts.push(`value ILIKE ${lit('%' + op.value + '%')}`);
-    else if (op.mode === 'numberRange') {
-      if (op.min != null) parts.push(`TRY_CAST(value AS DOUBLE) >= ${Number(op.min)}`);
-      if (op.max != null) parts.push(`TRY_CAST(value AS DOUBLE) <= ${Number(op.max)}`);
+    // Values are VARCHAR in every attribute relation; the cast is a no-op
+    // there and keeps the comparison text-on-text if a source ever isn't.
+    const v = 'CAST(value AS VARCHAR)';
+    const num = 'TRY_CAST(value AS DOUBLE)';
+    const ts = 'TRY_CAST(value AS TIMESTAMP)';
+    switch (positive) {
+      case 'equals': parts.push(`${v} = ${lit(op.value)}`); break;
+      case 'oneOf': parts.push(`${v} IN (${(op.values ?? []).map(lit).join(', ')})`); break;
+      case 'contains': parts.push(`${v} ILIKE ${lit(`%${likeEscape(op.value)}%`)} ESCAPE '\\'`); break;
+      case 'startsWith': parts.push(`${v} ILIKE ${lit(`${likeEscape(op.value)}%`)} ESCAPE '\\'`); break;
+      case 'endsWith': parts.push(`${v} ILIKE ${lit(`%${likeEscape(op.value)}`)} ESCAPE '\\'`); break;
+      case 'regex': parts.push(`regexp_matches(${v}, ${lit(op.value)})`); break;
+      case 'atLeast': parts.push(`${num} >= ${Number(op.min)}`); break;
+      case 'atMost': parts.push(`${num} <= ${Number(op.max)}`); break;
+      case 'numberRange':
+        if (op.min != null) parts.push(`${num} >= ${Number(op.min)}`);
+        if (op.max != null) parts.push(`${num} <= ${Number(op.max)}`);
+        break;
+      case 'onOrAfter': parts.push(`${ts} >= TIMESTAMP ${lit(op.from!)}`); break;
+      case 'onOrBefore': parts.push(`${ts} <= TIMESTAMP ${lit(op.to!)}`); break;
+      case 'dateRange':
+        if (op.from) parts.push(`${ts} >= TIMESTAMP ${lit(op.from)}`);
+        if (op.to) parts.push(`${ts} <= TIMESTAMP ${lit(op.to)}`);
+        break;
+      case 'has': break;
     }
-    return `SELECT DISTINCT ${idColumn} FROM ${table} WHERE ${parts.join(' AND ')}`;
+    return {
+      hits: `SELECT DISTINCT ${idColumn} FROM ${table} WHERE ${parts.join(' AND ')}`,
+      negate: positive !== op.mode,
+    };
   };
 
   /** Restricts every relation to a set of cases. */
@@ -419,20 +455,25 @@ export function compilePlan(
         const keyColumn = isOcelPlan ? 'name' : 'key';
         const idColumn = isOcelPlan ? 'event_id' : 'event_idx';
         if (!rel.event_attr) throw new Error('This log has no event-attribute relation');
-        const hits = attributePredicate(rel.event_attr, keyColumn, idColumn, op);
-        cascadeFromEvents(`SELECT * FROM ${rel.event} WHERE ${idColumn} IN (${hits})`);
+        const { hits, negate } = attributeHits(rel.event_attr, keyColumn, idColumn, op);
+        const test = `${idColumn} ${negate ? 'NOT IN' : 'IN'} (${hits})`;
+        // Scoped to one activity: only its events are tested, the rest pass.
+        cascadeFromEvents(`SELECT * FROM ${rel.event} WHERE ${op.activity
+          ? `activity IS DISTINCT FROM ${lit(op.activity)} OR ${test}` : test}`);
         break;
       }
 
       case 'filterObjectAttribute': {
         if (isOcelPlan) {
           if (!rel.object_attr) throw new Error('This log has no object-attribute relation');
-          const hits = attributePredicate(rel.object_attr, 'name', 'object_id', op);
-          cascadeFromObjects(`SELECT * FROM ${rel.object} WHERE object_id IN (${hits})`);
+          const { hits, negate } = attributeHits(rel.object_attr, 'name', 'object_id', op);
+          const test = `object_id ${negate ? 'NOT IN' : 'IN'} (${hits})`;
+          cascadeFromObjects(`SELECT * FROM ${rel.object} WHERE ${op.objectType
+            ? `object_type IS DISTINCT FROM ${lit(op.objectType)} OR ${test}` : test}`);
         } else {
           if (!rel.trace_attr) throw new Error('This log has no case-attribute relation');
-          const hits = attributePredicate(rel.trace_attr, 'key', 'trace_idx', op);
-          keepTraces(hits);
+          const { hits, negate } = attributeHits(rel.trace_attr, 'key', 'trace_idx', op);
+          keepTraces(negate ? `SELECT trace_idx FROM ${rel.trace} WHERE trace_idx NOT IN (${hits})` : hits);
         }
         break;
       }
@@ -507,6 +548,17 @@ export function compilePlan(
         keepTraces(op.mode === 'contains'
           ? hit
           : `SELECT DISTINCT trace_idx FROM ${rel.event} WHERE trace_idx NOT IN (${hit})`);
+        break;
+      }
+
+      case 'keepCases': {
+        if (isOcelPlan) throw new Error('Case filters require a case-centric log');
+        // A set decided elsewhere, so there is no predicate to compile — only
+        // the ids. `unnest` keeps this one statement whatever the size of the
+        // set. An empty set never arrives: `isComplete` skips it above, and
+        // `importOperations` rejects it at the plugin door, because "keep
+        // nothing" and "keep everything" must not be one typo apart.
+        keepTraces(`SELECT CAST(unnest([${op.traces.map((t) => Math.max(0, Math.trunc(t))).join(',')}]) AS BIGINT) AS trace_idx`);
         break;
       }
 

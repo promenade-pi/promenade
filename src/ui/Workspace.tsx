@@ -5,6 +5,7 @@ import { DockviewReact, type DockviewReadyEvent, type IDockviewPanelProps } from
 import type { Artifact, ProvenanceGraph } from '../host/artifact/types';
 import { LogOverview } from './views/LogOverview';
 import { ActivityTable } from './views/ActivityTable';
+import { EventTable } from './views/EventTable';
 import { AttributeTable } from './views/AttributeTable';
 import { TraceExplorer } from './views/TraceExplorer';
 import { DfgView } from './views/DfgView';
@@ -118,6 +119,12 @@ viewRegistry.register({
 viewRegistry.register({
   id: 'core.activityTable', label: 'Activities', provider: 'core', trusted: true,
   appliesTo: ['ObjectCentricEventLog', 'TraditionalEventLog'], component: ActivityTable,
+});
+viewRegistry.register({
+  // Where the Overview's "Events" tile leads. OCEL logs get theirs from the
+  // OCEL Inspector plugin, the same split as the Overview itself.
+  id: 'core.eventTable', label: 'Events', provider: 'core', trusted: true,
+  appliesTo: ['TraditionalEventLog'], component: EventTable,
 });
 viewRegistry.register({
   id: 'core.attributeTable', label: 'Attributes', provider: 'core', trusted: true,
@@ -510,6 +517,9 @@ function PanelHost(props: IDockviewPanelProps<{
         // view already gets its params pushed one-way and has no use for it.
         onParamChange={(props.params as any).onParamChange}
         onOpenArtifact={(props.params as any).onOpenArtifact}
+        // The same cross-view link a sandboxed view gets through
+        // `promenade.openView()` — the Overview's stat tiles use it.
+        onOpenView={handleOpenView}
         onFocusArtifact={(props.params as any).onFocusArtifact}
         onGraphUpdated={(props.params as any).onGraphUpdated}
         // Only the gallery reads these two: what the workspace has installed
@@ -734,7 +744,8 @@ export function Workspace({
   onPublishedArtifact?: (a: Artifact) => void;
   /** Backs `promenade.deriveLog()` for sandboxed views that declare `derivesLogs`. */
   onDeriveLog?: (
-    boundArtifactId: string, ops: unknown[]
+    boundArtifactId: string, ops: unknown[],
+    opts?: { group?: string; name?: string }
   ) => Promise<{ id: string; name: string; applied: number }>;
   /** Persists a notebook as a `Notebook` artifact — the notebook analog of `onSaveScript`. */
   onSaveNotebook?: (doc: any, artifact: any, nameOverride?: string) => Promise<any> | void;

@@ -16,3 +16,19 @@ test('imports reject malformed definitions and invalid flatten placement', () =>
     { kind: 'flattenByObjectType', objectType: 'order' },
   ])), /first and only/);
 });
+
+test('a case set from a plugin is checked element by element', () => {
+  const ops = importOperations(JSON.stringify([
+    { kind: 'keepCases', traces: [0, 7, 12], label: 'Cluster 1' },
+  ]));
+  assert.equal(ops.length, 1);
+  assert.deepEqual(ops[0], { kind: 'keepCases', traces: [0, 7, 12], label: 'Cluster 1' });
+
+  for (const traces of [[1, -2], [1, 2.5], [1, '2'], 'all', []]) {
+    assert.throws(
+      () => importOperations(JSON.stringify([{ kind: 'keepCases', traces }])),
+      /invalid fields/,
+      `accepted ${JSON.stringify(traces)}`
+    );
+  }
+});

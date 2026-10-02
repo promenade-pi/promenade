@@ -187,3 +187,92 @@ test('two primary views of the same artifact type are refused', () => {
   assert.ok(clash.errors.some((e) => /at most one view per artifact type/.test(e)));
   assert.ok(clash.errors.some((e) => /ExampleModel/.test(e)));
 });
+
+/**
+ * A package declaring one of its own artifact types to be table-shaped.
+ *
+ * These names become physical storage — one DuckDB view per relation, named
+ * after it — so they are checked at install rather than sanitised later into
+ * something the plugin's own SQL would no longer recognise.
+ */
+function tableManifest(table: unknown) {
+  return {
+    manifestVersion: 1,
+    id: 'org.example.features',
+    name: 'Features',
+    version: '0.1.0',
+    runtime: 'view',
+    artifactTypes: [{ id: 'FeatureTable', label: 'Feature Table', shortLabel: 'FEAT', table }],
+    views: [{ id: 'org.example.features.table', entry: 'view/table.js', appliesTo: ['FeatureTable'] }],
+  };
+}
+
+const TABLE_FILES = new Set(['view/table.js']);
+
+test('a package may declare an artifact type to be table-shaped', () => {
+  const ok = validateManifest(tableManifest({
+    relations: [{
+      name: 'features',
+      open: true,
+      columns: [
+        { name: 'trace_idx', type: 'bigint', required: true },
+        { name: 'duration_secs', type: 'double' },
+      ],
+    }],
+  }), TABLE_FILES);
+  assert.deepEqual(ok.errors, []);
+});
+
+test('a table declaration is refused when it names nothing storage could hold', () => {
+  const cases: Array<[unknown, RegExp]> = [
+    [{ relations: [] }, /must declare at least one relation/],
+    [{ relations: [{ name: 'Features', columns: [{ name: 'a', type: 'bigint' }] }] }, /relation name "Features" must be lower-case/],
+    [{ relations: [{ name: 'features', columns: [] }] }, /relation "features" declares no columns/],
+    [{ relations: [{ name: 'features', columns: [{ name: 'trace idx', type: 'bigint' }] }] }, /column name "trace idx".*must be lower-case/],
+    [{ relations: [{ name: 'features', columns: [{ name: 'x', type: 'blob' }] }] }, /unknown type "blob"/],
+    [
+      { relations: [{ name: 'features', columns: [{ name: 'x', type: 'bigint' }, { name: 'x', type: 'double' }] }] },
+      /column "x" of "features" is declared twice/,
+    ],
+    [
+      {
+        relations: [
+          { name: 'features', columns: [{ name: 'x', type: 'bigint' }] },
+          { name: 'features', columns: [{ name: 'y', type: 'bigint' }] },
+        ],
+      },
+      /relation "features" is declared twice/,
+    ],
+  ];
+  for (const [table, expected] of cases) {
+    const result = validateManifest(tableManifest(table), TABLE_FILES);
+    assert.equal(result.ok, false, `accepted ${JSON.stringify(table)}`);
+    assert.ok(
+      result.errors.some((e) => expected.test(e)),
+      `for ${JSON.stringify(table)} wanted ${expected}, got ${JSON.stringify(result.errors)}`
+    );
+  }
+});
+
+test('a data-bound parameter with no query is refused at install', () => {
+  // `loadOptions` reads this from a React render, so a malformed source is
+  // not a broken control — it is an uncaught throw that unmounts the whole
+  // application. An installed package must not be able to do that.
+  const withOptions = (optionsFrom: unknown) => validateManifest({
+    ...tableManifest({ relations: [{ name: 'features', columns: [{ name: 'row_id', type: 'bigint' }] }] }),
+    views: [{
+      id: 'org.example.features.table', entry: 'view/table.js', appliesTo: ['FeatureTable'],
+      params: { type: 'object', properties: { pick: { type: 'string', optionsFrom } }, required: [] },
+    }],
+  }, TABLE_FILES);
+
+  assert.deepEqual(withOptions({ sql: 'SELECT object_type AS value FROM {object}' }).errors, []);
+  for (const bad of ['objectTypes', 42, [], {}, { sql: '  ' }, { sql: 'SELECT 1', countField: 3 }]) {
+    const result = withOptions(bad);
+    assert.equal(result.ok, false, `accepted ${JSON.stringify(bad)}`);
+    assert.ok(
+      result.errors.some((e) => /optionsFrom/.test(e)),
+      `for ${JSON.stringify(bad)} got ${JSON.stringify(result.errors)}`
+    );
+  }
+});

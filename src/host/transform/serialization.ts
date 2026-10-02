@@ -1,4 +1,4 @@
-import { OP_LABEL, newOp, type TransformOp, type TransformOpKind } from './types.ts';
+import { ATTRIBUTE_FILTER_MODES, OP_LABEL, newOp, type TransformOp, type TransformOpKind } from './types.ts';
 
 /** A deliberately small, portable JSON envelope for saved transformation definitions. */
 export const TRANSFORM_OPERATIONS_FORMAT = 'promenade.transform-operations/v1';
@@ -101,8 +101,12 @@ function parseOperation(value: unknown): TransformOp {
         && typeof value.minFrequency === 'number' && typeof value.maxFrequency === 'number'; break;
     case 'filterEventAttribute':
     case 'filterObjectAttribute':
-      valid = hasStrings(value, 'key', 'value') && ['has', 'equals', 'contains', 'numberRange'].includes(String(value.mode))
-        && optionalNumber(value.min) && optionalNumber(value.max); break;
+      valid = hasStrings(value, 'key', 'value')
+        && (ATTRIBUTE_FILTER_MODES as readonly string[]).includes(String(value.mode))
+        && optionalNumber(value.min) && optionalNumber(value.max)
+        && (value.values == null || stringArray(value.values))
+        && optionalString(value.from) && optionalString(value.to)
+        && optionalString(value.activity) && optionalString(value.objectType); break;
     case 'filterE2oCount':
     case 'filterO2oCount':
       valid = optionalNumber(value.min) && optionalNumber(value.max) && (value.conditions == null
@@ -111,6 +115,13 @@ function parseOperation(value: unknown): TransformOp {
           && optionalNumber(condition.min) && optionalNumber(condition.max))); break;
     case 'timeRange': valid = optionalString(value.from) && optionalString(value.to); break;
     case 'filterCases': valid = typeof value.activity === 'string' && ['contains', 'notContains'].includes(String(value.mode)); break;
+    case 'keepCases':
+      // The one operation whose payload comes from an algorithm rather than a
+      // form, so every element is checked: a non-integer here would compile
+      // into SQL, and a negative one silently keeps nothing.
+      valid = Array.isArray(value.traces) && value.traces.length > 0 && value.traces.every(
+        (t) => typeof t === 'number' && Number.isInteger(t) && t >= 0
+      ) && optionalString(value.label); break;
     case 'variantMinCases': valid = typeof value.minCases === 'number'; break;
     case 'removeAttribute': valid = typeof value.key === 'string' && ['event', 'trace'].includes(String(value.scope)); break;
     case 'removeEventAttributes': valid = typeof value.activity === 'string' && stringArray(value.keys); break;

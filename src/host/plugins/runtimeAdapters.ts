@@ -264,6 +264,10 @@ export function wasmActionRuntime(manifest: PluginManifest, action: ManifestActi
       // the plugin may put in the catalog is still only rows, checked column
       // by column against that schema before anything is written.
       const outputType = action.outputs?.[0]?.type;
+      const wasmTableSchema = tableSchemaOf(manifest, outputType);
+      if (wasmTableSchema) {
+        return persistTableResult(manifest, action, wasmPayload, wasmTableSchema, inputs, ctx);
+      }
       if (outputType && schemaFor(outputType)) {
         const log = wasmPayload.log;
         if (!log || typeof log !== 'object') {
@@ -314,6 +318,53 @@ export function wasmActionRuntime(manifest: PluginManifest, action: ManifestActi
       };
     },
   };
+}
+
+/**
+ * The table schema this package declared for one of its own artifact types,
+ * or `undefined` when the type is not table-shaped.
+ *
+ * Read from the manifest rather than from a host registry on purpose: a
+ * plugin-declared table's schema belongs to the package that declared it, and
+ * looking it up here is what lets `persistTable` check a plugin's rows
+ * without the host having to know about the type in advance.
+ */
+function tableSchemaOf(manifest: PluginManifest, typeId: string | undefined) {
+  if (!typeId) return undefined;
+  const declared = (manifest.artifactTypes ?? []).find((t) => t.id === typeId);
+  return declared?.table?.relations;
+}
+
+/**
+ * Turns a runtime's `{ table: … }` result into a persisted table artifact.
+ *
+ * Shared by the WASM and pyodide adapters because the rule is the same for
+ * both and belongs to neither: the declared output type having a `table`
+ * schema *is* the signal, exactly as a logical schema is the signal for a
+ * log-shaped output. No plugin-specific code, and no new manifest field
+ * beyond the type declaration itself.
+ */
+async function persistTableResult(
+  manifest: PluginManifest, action: ManifestAction, payload: any,
+  schema: NonNullable<ReturnType<typeof tableSchemaOf>>,
+  inputs: Record<string, ArtifactId[]>, ctx: ActionContext,
+): Promise<ActionOutcome> {
+  const relations = payload?.table;
+  if (!relations || typeof relations !== 'object') {
+    throw new Error(
+      `action ${action.id}: declares a ${action.outputs[0].type} output, so it must return ` +
+      `{ table: { <relation>: { <column>: [...] } } }`
+    );
+  }
+  const artifact = await ctx.persistTable({
+    type: action.outputs[0].type,
+    name: typeof payload.name === 'string' && payload.name.trim() ? payload.name.trim() : action.label,
+    relations,
+    schema,
+    inputs,
+    meta: { ...(payload.stats ?? {}) },
+  });
+  return { persisted: artifact, runtimeVersion: `${manifest.id} ${manifest.version}` };
 }
 
 export function pyodideActionRuntime(manifest: PluginManifest, action: ManifestAction) {
@@ -391,6 +442,16 @@ export function pyodideActionRuntime(manifest: PluginManifest, action: ManifestA
       if (!out) throw new SupersededError(action.id);
 
       const payload: any = out.result ?? {};
+
+      // A pyodide action whose declared output type is table-shaped returns
+      // the table's columns rather than an inline payload. This is what lets a
+      // Python action produce a *dataset* — a feature matrix someone models on
+      // — instead of a blob no query, view or notebook can read as a table.
+      const tableSchema = tableSchemaOf(manifest, action.outputs?.[0]?.type);
+      if (tableSchema) {
+        return persistTableResult(manifest, action, payload, tableSchema, inputs, ctx);
+      }
+
       return {
         inline: {
           value: out.result,

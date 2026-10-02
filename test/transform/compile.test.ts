@@ -2,6 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { compilePlan } from '../../src/host/transform/compile.ts';
 
+const CASE_TABLES = {
+  event: 'source__event',
+  event_attr: 'source__event_attr',
+  trace: 'source__trace',
+  trace_attr: 'source__trace_attr',
+};
+
 const OCEL_TABLES = {
   event: 'source__event',
   object: 'source__object',
@@ -132,4 +139,31 @@ test('a new rename refuses to overwrite an existing category while merge is expl
   assert.match(sql, /activity = 'Pack' AND NOT EXISTS \(SELECT 1 FROM source__event rename_target WHERE rename_target\.activity = 'Ship'\)/);
   assert.match(sql, /CASE WHEN activity IN \('Pack', 'Repack'\) THEN 'Ship'/);
   assert.match(sql, /CASE WHEN object_type IN \('sales order', 'return order'\) THEN 'order'/);
+});
+
+test('keeping a named set of cases compiles to those case ids and nothing else', () => {
+  const sql = compilePlan('derived', CASE_TABLES, [
+    { kind: 'keepCases', traces: [4, 9, 1], label: 'Cluster 2' },
+  ]).statements.join('\n');
+
+  assert.match(sql, /unnest\(\[4,9,1\]\) AS BIGINT\) AS trace_idx/);
+  assert.match(sql, /derived__s0__event AS SELECT \* FROM source__event WHERE trace_idx IN/);
+  assert.match(sql, /derived__s0__trace AS SELECT \* FROM source__trace WHERE trace_idx IN/);
+});
+
+test('an empty set of cases is an unfinished operation, not a filter that keeps nothing', () => {
+  // Same rule as every half-typed operation in the editor: incomplete means
+  // inert. The plugin door is where an empty set is refused outright, so this
+  // can never silently turn "keep these cases" into "keep every case".
+  const sql = compilePlan('derived', CASE_TABLES, [{ kind: 'keepCases', traces: [] }]).statements.join('\n');
+
+  assert.match(sql, /derived__event AS SELECT \* FROM source__event/);
+  assert.doesNotMatch(sql, /trace_idx IN/);
+});
+
+test('keeping cases is case-centric only', () => {
+  assert.throws(
+    () => compilePlan('derived', OCEL_TABLES, [{ kind: 'keepCases', traces: [1] }]),
+    /Case filters require a case-centric log/
+  );
 });

@@ -43,6 +43,13 @@ export function optionSourceArtifact(
 }
 
 export function loadOptions(source: OptionSource, artifact: Artifact): Promise<Option[]> {
+  // A control with no query has nothing to offer, and saying so is the whole
+  // response. This ran straight into `undefined.split` before, from a React
+  // render, which unmounts the application: an installed package must not be
+  // able to take the whole workspace down with one mistyped manifest field.
+  // `validateManifest` refuses such a package at install; this is the second
+  // line, for anything already installed.
+  if (!source || typeof source.sql !== 'string') return Promise.resolve([]);
   if (artifact.storage.kind !== 'parquet') return Promise.resolve([]);
 
   const tables = Object.fromEntries(

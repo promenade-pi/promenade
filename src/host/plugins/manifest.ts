@@ -122,6 +122,38 @@ export interface PluginManifest {
      * its responses, say) cannot tell them apart in the tree at all.
      */
     family?: 'log' | 'model' | 'result';
+    /**
+     * Declares this type to be **table-shaped**: an artifact of it holds named
+     * relations of rows, stored and queried like a log's, rather than an
+     * inline payload only its own views understand.
+     *
+     * Without this a package can contribute exactly two shapes of result — a
+     * blob (inline JSON, opaque to SQL) or a log (a fixed schema the host
+     * defines). Neither is a *dataset*: a feature matrix, a metrics table, a
+     * per-resource summary. This is that third shape, and the reason it is a
+     * manifest declaration rather than a free-for-all is that the host still
+     * writes the storage: the plugin says what its columns mean, and
+     * `artifact/table-rows.ts` checks what it hands over against that.
+     *
+     * `open` relaxes the column list to a *minimum* rather than a closed set,
+     * for the case the fixed form cannot express: one column per activity in
+     * the log, which is not knowable when the manifest is written. Extra
+     * columns are typed by inspection and are the plugin's own responsibility;
+     * the declared ones are still required, still checked.
+     */
+    table?: {
+      relations: Array<{
+        name: string;
+        description?: string;
+        open?: boolean;
+        columns: Array<{
+          name: string;
+          type: 'bigint' | 'integer' | 'varchar' | 'timestamp' | 'double' | 'boolean';
+          required?: boolean;
+          description?: string;
+        }>;
+      }>;
+    };
   }>;
   actions?: Array<{
     id: string;
@@ -725,6 +757,37 @@ export function validateManifest(raw: unknown, files: Set<string>): ValidationRe
 
 
 /**
+ * `optionsFrom` is read by a React render, so a malformed one is not a broken
+ * control — it is a crash inside the render that unmounts the application. An
+ * installed package must not be able to do that, so the shape is checked here
+ * and `loadOptions` refuses to run without a query as a second line.
+ */
+function validateOptionsFrom(where: string, params: ParamSchema | undefined): string[] {
+  const errors: string[] = [];
+  for (const [key, p] of Object.entries(params?.properties ?? {})) {
+    const source = (p as { optionsFrom?: unknown }).optionsFrom;
+    if (source === undefined) continue;
+    if (!source || typeof source !== 'object' || Array.isArray(source)) {
+      errors.push(
+        `${where}: parameter "${key}" optionsFrom must be an object with a "sql" query, not ` +
+        `${Array.isArray(source) ? 'an array' : typeof source}`
+      );
+      continue;
+    }
+    const { sql, valueField, labelField, countField } = source as Record<string, unknown>;
+    if (typeof sql !== 'string' || !sql.trim()) {
+      errors.push(`${where}: parameter "${key}" optionsFrom needs a non-empty "sql" query`);
+    }
+    for (const [field, value] of Object.entries({ valueField, labelField, countField })) {
+      if (value !== undefined && typeof value !== 'string') {
+        errors.push(`${where}: parameter "${key}" optionsFrom "${field}" must be a column name`);
+      }
+    }
+  }
+  return errors;
+}
+
+/**
  * `showWhen` is a contract, so a broken one is refused at install rather than
  * silently ignored at render — a condition that never holds would hide a
  * control with no way for the author to tell.
@@ -788,6 +851,7 @@ function validateShowWhen(where: string, params: ParamSchema | undefined): strin
     for (const p of Object.values(a.params?.properties ?? {})) if (p.primary) primaries++;
     if (primaries > 1) errors.push(`action ${a.id}: more than one primary parameter`);
     errors.push(...validateShowWhen(`action ${a.id}`, a.params));
+    errors.push(...validateOptionsFrom(`action ${a.id}`, a.params));
 
     const rt = runtimeOf(m, a);
     if (rt === 'wasm') {
@@ -820,9 +884,47 @@ function validateShowWhen(where: string, params: ParamSchema | undefined): strin
   }
 
   const FAMILIES = ['log', 'model', 'result'];
+  const COLUMN_TYPES = ['bigint', 'integer', 'varchar', 'timestamp', 'double', 'boolean'];
+  const RELATION_NAME = /^[a-z][a-z0-9_]*$/;
   for (const t of m.artifactTypes ?? []) {
     if (t.family !== undefined && !FAMILIES.includes(t.family)) {
       errors.push(`artifact type ${t.id}: unknown family "${t.family}" — one of ${FAMILIES.join(', ')}`);
+    }
+    if (t.table === undefined) continue;
+    // A declared table schema becomes physical storage — one DuckDB view per
+    // relation, named after it — so the names are checked here rather than
+    // sanitised later into something the plugin's own SQL would not recognise.
+    if (!Array.isArray(t.table.relations) || t.table.relations.length === 0) {
+      errors.push(`artifact type ${t.id}: "table" must declare at least one relation`);
+      continue;
+    }
+    const seenRelations = new Set<string>();
+    for (const relation of t.table.relations) {
+      if (!RELATION_NAME.test(relation?.name ?? '')) {
+        errors.push(`artifact type ${t.id}: relation name "${relation?.name}" must be lower-case letters, digits and underscores`);
+        continue;
+      }
+      if (seenRelations.has(relation.name)) {
+        errors.push(`artifact type ${t.id}: relation "${relation.name}" is declared twice`);
+      }
+      seenRelations.add(relation.name);
+      if (!Array.isArray(relation.columns) || relation.columns.length === 0) {
+        errors.push(`artifact type ${t.id}: relation "${relation.name}" declares no columns`);
+        continue;
+      }
+      const seenColumns = new Set<string>();
+      for (const column of relation.columns) {
+        if (!RELATION_NAME.test(column?.name ?? '')) {
+          errors.push(`artifact type ${t.id}: column name "${column?.name}" in "${relation.name}" must be lower-case letters, digits and underscores`);
+        }
+        if (seenColumns.has(column?.name)) {
+          errors.push(`artifact type ${t.id}: column "${column.name}" of "${relation.name}" is declared twice`);
+        }
+        seenColumns.add(column?.name);
+        if (!COLUMN_TYPES.includes(column?.type)) {
+          errors.push(`artifact type ${t.id}: column "${column?.name}" of "${relation.name}" has unknown type "${column?.type}" — one of ${COLUMN_TYPES.join(', ')}`);
+        }
+      }
     }
   }
 
@@ -903,6 +1005,7 @@ function validateShowWhen(where: string, params: ParamSchema | undefined): strin
       }
     }
     errors.push(...validateShowWhen(`view ${v.id}`, v.params));
+    errors.push(...validateOptionsFrom(`view ${v.id}`, v.params));
   }
   // `primary` means "this view *is* the artifact" — see `ViewDef.primary` in
   // `host/views/registry.ts`, and the per-type lookups that read it

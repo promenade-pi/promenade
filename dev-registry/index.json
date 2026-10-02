@@ -600,6 +600,12 @@
           "bytes": 74766,
           "released": "2026-09-18",
           "changelog": "Corrected the homepage/repository URLs: the plugins live in one repository, promenade-pi/plugins, not one repository per plugin under an organisation that was never created. Metadata only — no functional change."
+        },
+        {
+          "version": "0.4.0",
+          "url": "packages/run.promenade.alignment-0.4.0.pmplugin",
+          "sha256": "ae6f5d963bb6e13095ade4ed0f24977e58f97ea69dd64cfdd781dce963e22146",
+          "bytes": 75003
         }
       ]
     },
@@ -816,6 +822,12 @@
           "url": "packages/run.promenade.bpmn-0.6.1.pmplugin",
           "sha256": "09edcdb718832713cad45f47d4f730bb7e03feb4e50d7fd93f62cba5f541a0b1",
           "bytes": 719909
+        },
+        {
+          "version": "0.6.2",
+          "url": "packages/run.promenade.bpmn-0.6.2.pmplugin",
+          "sha256": "04a1c082eabcc34b164f4da405412e04304f5d622c60eb6849cbdb8768909caa",
+          "bytes": 720782
         }
       ]
     },
@@ -875,6 +887,12 @@
           "bytes": 13905,
           "released": "2026-08-28",
           "changelog": "Initial release: an interactive cardinality scenario explorer for OCEL logs, with object relation cards, 1:n controls, target lifecycle variants, lead-time and rework indicators, an affected-activity map, and operational breakdown controls when matching attributes exist."
+        },
+        {
+          "version": "0.1.1",
+          "url": "packages/run.promenade.cardinality-impact-explorer-0.1.1.pmplugin",
+          "sha256": "e5006367d419f91eb3a9f6164b762cec20dd90b9752df0ffb32969d8335795f5",
+          "bytes": 14076
         }
       ]
     },
@@ -885,10 +903,7 @@
       "runtime": "wasm + view",
       "authors": [
         {
-          "name": "István Koren",
-          "email": "korenistvan@inf.elte.hu",
-          "affiliation": "ELTE University Budapest, Data Science and Engineering",
-          "orcid": "0000-0003-1350-6732"
+          "name": "Promenade Team"
         }
       ],
       "citation": {
@@ -961,6 +976,12 @@
           "url": "packages/run.promenade.declare-0.1.1.pmplugin",
           "sha256": "37ff6bf0075670a4734fd245a7a77731dea3d8d08b9d75755ec88bbe1f35046f",
           "bytes": 210436
+        },
+        {
+          "version": "0.1.2",
+          "url": "packages/run.promenade.declare-0.1.2.pmplugin",
+          "sha256": "0083a30b427a46a291bba7e0ad9f52210ae1e855c77755aa8a1d40a2b86f215d",
+          "bytes": 210474
         }
       ]
     },
@@ -1057,6 +1078,68 @@
           "bytes": 13067,
           "released": "2026-08-22",
           "changelog": "Removes click-to-select row highlighting: clicking anywhere on the canvas dimmed every other row, but the effect was imperceptible against the chart's already-sparse dots. The chart no longer reacts to clicks or to a selection made elsewhere; the legend's click-to-highlight-by-color is unaffected."
+        },
+        {
+          "version": "0.6.6",
+          "url": "packages/run.promenade.dotted-chart-0.6.6.pmplugin",
+          "sha256": "3bf27ac0ef1126173f57d85f5cfa6643a69941f5a6c208433d5fcaaecf6b9991",
+          "bytes": 13226
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.etm",
+      "name": "Evolutionary Tree Miner",
+      "description": "Every other miner builds a model out of the log by a fixed recipe, and each recipe contains one unstated opinion about what a good model is. This one searches instead: it breeds a population of process trees and scores each on replay fitness, precision, generalization and simplicity — with the weights left to you. Slower than a recipe, and the only miner here you can argue with.",
+      "runtime": "wasm",
+      "authors": [
+        {
+          "name": "Promenade Team"
+        }
+      ],
+      "citation": {
+        "text": "Buijs, J.C.A.M., van Dongen, B.F. and van der Aalst, W.M.P. (2012). A genetic algorithm for discovering process trees. IEEE Congress on Evolutionary Computation (CEC), 1–8. Replay fitness and precision are computed by the conformance-checking plugin's own crate, so the numbers this miner optimises are the numbers the workspace later reports.",
+        "doi": "10.1109/CEC.2012.6256458",
+        "bibtex": "@inproceedings{buijs2012genetic,\n  title     = {A genetic algorithm for discovering process trees},\n  author    = {Buijs, Joos C. A. M. and van Dongen, Boudewijn F. and van der Aalst, Wil M. P.},\n  booktitle = {2012 IEEE Congress on Evolutionary Computation},\n  pages     = {1--8},\n  year      = {2012},\n  doi       = {10.1109/CEC.2012.6256458}\n}"
+      },
+      "keywords": [
+        "process-discovery",
+        "genetic-algorithm",
+        "process-tree",
+        "etm",
+        "fitness",
+        "precision",
+        "rust"
+      ],
+      "provides": [
+        "ProcessTree"
+      ],
+      "accepts": [
+        "TraditionalEventLog"
+      ],
+      "consumes": [
+        "TraditionalEventLog"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.etm.discover",
+          "label": "Evolutionary Tree Miner",
+          "description": "Searches for a process tree rather than constructing one. Starts from a population of candidates, scores each against the log on four quality dimensions, breeds the survivors, and returns the best tree it found. A process tree is sound by construction, so every candidate — and the result — is a sound workflow model.",
+          "inputs": [
+            "TraditionalEventLog"
+          ],
+          "outputs": [
+            "ProcessTree"
+          ],
+          "runtime": "wasm"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.1.0",
+          "url": "packages/run.promenade.etm-0.1.0.pmplugin",
+          "sha256": "7ae00d42b47f148324f7ee7133c0b2020c6b15f7b1e05829faee631670323109",
+          "bytes": 105332
         }
       ]
     },
@@ -1074,7 +1157,7 @@
         }
       ],
       "citation": {
-        "text": "Strict equality and structural isomorphism follow the OCEL equivalence definitions of the transformation-calculus draft (Definitions 1–2). The structural decision procedure is a bounded 1-dimensional Weisfeiler–Leman colour refinement with a capped backtracking search, not a complete isomorphism test."
+        "text": "Strict equality and structural isomorphism follow the OCEL equivalence definitions of the transformation-calculus draft (Definitions 1–2). The structural decision procedure is a bounded 1-dimensional Weisfeiler–Leman color refinement with a capped backtracking search, not a complete isomorphism test."
       },
       "keywords": [
         "comparison",
@@ -1121,6 +1204,103 @@
           "bytes": 15856,
           "released": "2026-08-31",
           "changelog": "Initial release: two-input OCEL comparison — strict equality with sampled differing tuples, bounded structural equivalence, reciprocal coverage and per-type deltas, suspected-rename detection, and a sandboxed report view."
+        },
+        {
+          "version": "0.1.1",
+          "url": "packages/run.promenade.event-log-transformations-0.1.1.pmplugin",
+          "sha256": "e605612800b53beb1957d673e856beb98b100900258b71fd4cf5036de8e7109c",
+          "bytes": 16013
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.feature-extraction",
+      "name": "Feature Extraction",
+      "description": "Turns a log into a table a model can learn from: one row per case, per prefix, or per object, and one column per thing about it. The result is a real table — queryable, joinable, exportable, readable from the Python notebook — not a blob. Targets and a train/test split come with it, and a feature that would give the answer away is left out rather than quietly leaking it.",
+      "runtime": "pyodide + view",
+      "authors": [
+        {
+          "name": "Promenade Team"
+        }
+      ],
+      "citation": {
+        "text": "Teinemaa, I., Dumas, M., La Rosa, M. and Maggi, F.M. (2019). Outcome-oriented predictive process monitoring: review and benchmark. ACM TKDD 13(2), 1–57 — the prefix and encoding scheme. Object features follow Berti, A., Herforth, J., Qafari, M.S. and van der Aalst, W.M.P. (2023). Graph-based feature extraction on object-centric event logs. Int. J. Data Science and Analytics.",
+        "doi": "10.1145/3301300",
+        "bibtex": "@article{teinemaa2019outcome,\n  title   = {Outcome-Oriented Predictive Process Monitoring: Review and Benchmark},\n  author  = {Teinemaa, Irene and Dumas, Marlon and La Rosa, Marcello and Maggi, Fabrizio Maria},\n  journal = {ACM Transactions on Knowledge Discovery from Data},\n  volume  = {13},\n  number  = {2},\n  pages   = {1--57},\n  year    = {2019},\n  doi     = {10.1145/3301300}\n}"
+      },
+      "keywords": [
+        "feature-extraction",
+        "machine-learning",
+        "predictive-monitoring",
+        "prefixes",
+        "train-test-split",
+        "object-centric"
+      ],
+      "provides": [
+        "FeatureTable"
+      ],
+      "renders": [
+        "FeatureTable"
+      ],
+      "accepts": [
+        "TraditionalEventLog",
+        "ObjectCentricEventLog"
+      ],
+      "consumes": [
+        "FeatureTable",
+        "TraditionalEventLog",
+        "ObjectCentricEventLog"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.feature-extraction.cases",
+          "label": "Extract case features",
+          "description": "One row per case: how long it took, how many events it had, how often it did each activity, and its case attributes. The table every case-level model starts from.",
+          "inputs": [
+            "TraditionalEventLog"
+          ],
+          "outputs": [
+            "FeatureTable"
+          ],
+          "runtime": "pyodide"
+        },
+        {
+          "id": "run.promenade.feature-extraction.prefixes",
+          "label": "Extract prefix features",
+          "description": "One row per case, built from only its first few events, with a target taken from what happened next. This is the table predictive process monitoring is trained on: the features precede the answer, so a model learned on it can be used while a case is still running.",
+          "inputs": [
+            "TraditionalEventLog"
+          ],
+          "outputs": [
+            "FeatureTable"
+          ],
+          "runtime": "pyodide"
+        },
+        {
+          "id": "run.promenade.feature-extraction.objects",
+          "label": "Extract object features",
+          "description": "One row per object of a chosen type: how many events touched it, over how long, which activities, and how many objects of each other type it is related to. The object-centric counterpart of case features, where the thing being described is an order or an item rather than a case.",
+          "inputs": [
+            "ObjectCentricEventLog"
+          ],
+          "outputs": [
+            "FeatureTable"
+          ],
+          "runtime": "pyodide"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.1.0",
+          "url": "packages/run.promenade.feature-extraction-0.1.0.pmplugin",
+          "sha256": "77d181376a67a73bbec6d30e42616f9a751e6fb31e1c52091dd4d25b1ccce168",
+          "bytes": 89790
+        },
+        {
+          "version": "0.1.1",
+          "url": "packages/run.promenade.feature-extraction-0.1.1.pmplugin",
+          "sha256": "451ba29b0171d3923093ec59f447568497a92a8ffd8839291c18037df30e5f6c",
+          "bytes": 89864
         }
       ]
     },
@@ -1498,7 +1678,7 @@
         {
           "id": "run.promenade.inductive-py.toPetriNet",
           "label": "Process tree → Petri net",
-          "description": "Converts a process tree into a behaviourally equivalent accepting Petri net, with an initial and a final marking.",
+          "description": "Converts a process tree into a behaviorally equivalent accepting Petri net, with an initial and a final marking.",
           "inputs": [
             "ProcessTree"
           ],
@@ -1522,6 +1702,12 @@
           "bytes": 6571,
           "released": "2026-08-17",
           "changelog": "Both actions now carry a description and agent notes, surfaced in the Inspector tooltip and to `promenade_list_actions`. \"Event limit\" is capped at what the selected log actually has, instead of a fixed five-million ceiling that meant nothing on a smaller one."
+        },
+        {
+          "version": "0.2.4",
+          "url": "packages/run.promenade.inductive-py-0.2.4.pmplugin",
+          "sha256": "c04eb0803a6af88ba71809406f5b6099502ea372c89e1c5c0624e900901069d4",
+          "bytes": 6728
         }
       ]
     },
@@ -1661,6 +1847,12 @@
           "released": "2026-08-28",
           "changelog": "Documents the host-managed interaction-cohort-v1 interchange for exact lasso cohorts. Compatible views receive only source-bound, host-validated membership and discrete bin masks; Performance Spectrum is the first consumer.",
           "channel": "dev"
+        },
+        {
+          "version": "0.1.23",
+          "url": "packages/run.promenade.interaction-atlas-0.1.23.pmplugin",
+          "sha256": "8e707ab35337668a6c843aa1b5f4dce957f19dcc69d8bfd9b786fb407fb49a04",
+          "bytes": 42701
         }
       ]
     },
@@ -1741,10 +1933,7 @@
       "runtime": "wasm + view",
       "authors": [
         {
-          "name": "István Koren",
-          "email": "korenistvan@inf.elte.hu",
-          "affiliation": "ELTE University Budapest, Data Science and Engineering",
-          "orcid": "0000-0003-1350-6732"
+          "name": "Promenade Team"
         }
       ],
       "citation": {
@@ -1810,6 +1999,12 @@
           "url": "packages/run.promenade.log-skeleton-0.1.0.pmplugin",
           "sha256": "d3376b5c2d6fa89bde5bd61d6fa602d9203062afec725fe20a7c5b9681909279",
           "bytes": 218727
+        },
+        {
+          "version": "0.1.1",
+          "url": "packages/run.promenade.log-skeleton-0.1.1.pmplugin",
+          "sha256": "0a6cb68f9b46dfa286da8e70e5059cbdb80722c7d39b5d9d32ccc8b2b3ae61e4",
+          "bytes": 218750
         }
       ]
     },
@@ -2192,10 +2387,7 @@
       "runtime": "wasm",
       "authors": [
         {
-          "name": "István Koren",
-          "email": "korenistvan@inf.elte.hu",
-          "affiliation": "ELTE University Budapest, Data Science and Engineering",
-          "orcid": "0000-0003-1350-6732"
+          "name": "Promenade Team"
         }
       ],
       "citation": {
@@ -2241,6 +2433,12 @@
           "url": "packages/run.promenade.net-reduce-0.1.0.pmplugin",
           "sha256": "70ad1578d1593ed0a869f5736f4e564761e032e9de64ecfdbf372337db6eaf48",
           "bytes": 67884
+        },
+        {
+          "version": "0.1.1",
+          "url": "packages/run.promenade.net-reduce-0.1.1.pmplugin",
+          "sha256": "cd13bfc99f6e52703d8ecd8c0b18fc681ac0fc9f1304995b77d28d2f01d87717",
+          "bytes": 67920
         }
       ]
     },
@@ -2560,10 +2758,7 @@
       "runtime": "relational",
       "authors": [
         {
-          "name": "István Koren",
-          "email": "korenistvan@inf.elte.hu",
-          "affiliation": "ELTE University Budapest, Data Science and Engineering",
-          "orcid": "0000-0003-1350-6732"
+          "name": "Promenade Team"
         }
       ],
       "citation": {
@@ -2646,6 +2841,12 @@
           "url": "packages/run.promenade.ocel-olap-0.1.0.pmplugin",
           "sha256": "593365d3b029301804a067f2c6d99d87ce5bfe84c1375cdfdbe4db6662cfc5cd",
           "bytes": 11542
+        },
+        {
+          "version": "0.1.1",
+          "url": "packages/run.promenade.ocel-olap-0.1.1.pmplugin",
+          "sha256": "dcb571e723a3b54d626091b190768d96d5c97ac2a7ee2df7a03aadb6a0530b79",
+          "bytes": 11585
         }
       ]
     },
@@ -3020,6 +3221,12 @@
           "bytes": 8355,
           "released": "2026-08-18",
           "changelog": "Initial release: discovers an Object-Centric Petri Net via `pm4py.discover_oc_petri_net` in Pyodide — the same artifact type the Rust plugin produces, so either OCPN viewer renders it. No internal projection stage; pm4py handles every object type itself."
+        },
+        {
+          "version": "0.1.1",
+          "url": "packages/run.promenade.ocpn-pm4py-0.1.1.pmplugin",
+          "sha256": "f0ba26111e6d4de94c255bf36d3bdf1a8b8a9ddcbd8fca6775b42e1009484e5a",
+          "bytes": 8522
         }
       ]
     },
@@ -3118,6 +3325,12 @@
           "released": "2026-08-28",
           "changelog": "Opts into interaction-cohort-v1. On a shared OCEL, users can choose a published Atlas lasso cohort and inspect outgoing directly-follows segments whose source event is selected.",
           "channel": "dev"
+        },
+        {
+          "version": "0.1.10",
+          "url": "packages/run.promenade.performance-spectrum-0.1.10.pmplugin",
+          "sha256": "87edc4521ff8e4d4fd5eb27c793e04afa1e872daeb03b4c150f5347dca7f65f3",
+          "bytes": 13749
         }
       ]
     },
@@ -3169,10 +3382,7 @@
       "runtime": "wasm",
       "authors": [
         {
-          "name": "István Koren",
-          "email": "korenistvan@inf.elte.hu",
-          "affiliation": "ELTE University Budapest, Data Science and Engineering",
-          "orcid": "0000-0003-1350-6732"
+          "name": "Promenade Team"
         }
       ],
       "citation": {
@@ -3218,6 +3428,12 @@
           "url": "packages/run.promenade.playout-0.1.0.pmplugin",
           "sha256": "959b99af8e94402b5ae19087459c6c9488c9f9c54af1b096a60bed51afd942d7",
           "bytes": 76353
+        },
+        {
+          "version": "0.1.1",
+          "url": "packages/run.promenade.playout-0.1.1.pmplugin",
+          "sha256": "1f6fe6076c8f9dfa01c67d4e128499f9f39cf80a9fa97e74926c84d44d163a33",
+          "bytes": 76378
         }
       ]
     },
@@ -3250,6 +3466,12 @@
           "bytes": 6635,
           "released": "2026-08-23",
           "changelog": "Replaces \"Show silent steps\" (hid tau leaves entirely) with \"Compact silent steps\" (shrinks and mutes them instead). A tau leaf is what makes an XOR branch optional or a loop 0..* vs 1..* rather than mandatory — removing it left the operator with one child and no trace anything was hidden, misrepresenting the model rather than just decluttering it."
+        },
+        {
+          "version": "0.1.6",
+          "url": "packages/run.promenade.process-tree-view-0.1.6.pmplugin",
+          "sha256": "59eb5585b82fa49d60c985f5c31ed0cdb848b0fcd399affd924d5180726b7993",
+          "bytes": 6795
         }
       ]
     },
@@ -3293,10 +3515,7 @@
       "runtime": "wasm + view",
       "authors": [
         {
-          "name": "István Koren",
-          "email": "korenistvan@inf.elte.hu",
-          "affiliation": "ELTE University Budapest, Data Science and Engineering",
-          "orcid": "0000-0003-1350-6732"
+          "name": "Promenade Team"
         }
       ],
       "citation": {
@@ -3346,6 +3565,12 @@
           "url": "packages/run.promenade.soundness-0.1.0.pmplugin",
           "sha256": "7c9506cb6b24a0f50be304a61eebef9eca28a4f51a8dbb522d08c5ffc4d0e35f",
           "bytes": 665004
+        },
+        {
+          "version": "0.1.1",
+          "url": "packages/run.promenade.soundness-0.1.1.pmplugin",
+          "sha256": "ad13b4a88a721a072bfc2812927d229e21ec609a73ed366acf3a0ef0c4704810",
+          "bytes": 665038
         }
       ]
     },
@@ -3356,10 +3581,7 @@
       "runtime": "wasm",
       "authors": [
         {
-          "name": "István Koren",
-          "email": "korenistvan@inf.elte.hu",
-          "affiliation": "ELTE University Budapest, Data Science and Engineering",
-          "orcid": "0000-0003-1350-6732"
+          "name": "Promenade Team"
         }
       ],
       "citation": {
@@ -3408,6 +3630,135 @@
           "url": "packages/run.promenade.split-miner-0.1.1.pmplugin",
           "sha256": "842c477cc0b20656a24162c6a638671371d0cb250204d40d89bfeab415c91a19",
           "bytes": 140144
+        },
+        {
+          "version": "0.1.2",
+          "url": "packages/run.promenade.split-miner-0.1.2.pmplugin",
+          "sha256": "b7b5288a27359332cde750421540eda14b0652ebdb7cdc159efd7fa57491caa2",
+          "bytes": 139702
+        }
+      ]
+    },
+    {
+      "id": "run.promenade.string-diagram",
+      "name": "String Diagrams",
+      "description": "Reduces a process model to its cospan-algebra signature — one generator per activity per context, recording which activity hands which typed object to which other activity, and nothing about the place, gateway, operator node or binding set that carried it. Object-centric Petri nets, Petri nets, process trees and BPMN all reduce by the same construction, so two models written in different notations can be compared directly. Equal signatures certify the same structure; an included signature certifies included behaviour.",
+      "runtime": "pyodide + view",
+      "authors": [
+        {
+          "name": "Promenade Team"
+        }
+      ],
+      "citation": {
+        "text": "Implements the construction of Antony R. Lee, Peter Tiňo and Iain B. Styles, \"String Diagrams for Process Mining\" (2026). Written from the paper; the authors' own proc-posets package is used as the differential oracle this plugin's invariant suite runs against, not as a dependency.",
+        "url": "https://arxiv.org/abs/2609.20478"
+      },
+      "keywords": [
+        "string diagram",
+        "cospan",
+        "signature",
+        "model comparison",
+        "equivalence",
+        "object-centric",
+        "petri net",
+        "process tree",
+        "bpmn",
+        "category theory"
+      ],
+      "provides": [
+        "CospanSignature",
+        "SignatureComparison"
+      ],
+      "renders": [
+        "CospanSignature",
+        "SignatureComparison"
+      ],
+      "accepts": [
+        "ObjectCentricPetriNet",
+        "AcceptingPetriNet",
+        "ProcessTree",
+        "Bpmn",
+        "CospanSignature"
+      ],
+      "consumes": [
+        "CospanSignature",
+        "SignatureComparison",
+        "ObjectCentricPetriNet",
+        "AcceptingPetriNet",
+        "ProcessTree",
+        "Bpmn"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.string-diagram.ocpn",
+          "label": "Extract cospan signature",
+          "description": "Reads an object-centric Petri net as the AND/OR graph of Definition 9 — places are choices, silent transitions are transparent routing — and reduces it to the finite set of generator cospans that is its signature. Variable arcs reach the generator as the leg constraint n >= 0.",
+          "inputs": [
+            "ObjectCentricPetriNet"
+          ],
+          "outputs": [
+            "CospanSignature"
+          ],
+          "runtime": "pyodide"
+        },
+        {
+          "id": "run.promenade.string-diagram.petri",
+          "label": "Extract cospan signature",
+          "description": "Reads an accepting Petri net as an AND/OR graph and reduces it to its signature. This is the untyped specialisation of Corollary 4.1: the same construction with the single trivial object type.",
+          "inputs": [
+            "AcceptingPetriNet"
+          ],
+          "outputs": [
+            "CospanSignature"
+          ],
+          "runtime": "pyodide"
+        },
+        {
+          "id": "run.promenade.string-diagram.tree",
+          "label": "Extract cospan signature",
+          "description": "Compiles a process tree into an AND/OR graph — operator nodes are mediators, silent leaves transparent — and reduces it to its signature. Sequence, exclusive choice, parallel, inclusive choice and loop are covered; the partially ordered operators are outside the paper's four notations and are refused by name.",
+          "inputs": [
+            "ProcessTree"
+          ],
+          "outputs": [
+            "CospanSignature"
+          ],
+          "runtime": "pyodide"
+        },
+        {
+          "id": "run.promenade.string-diagram.bpmn",
+          "label": "Extract cospan signature",
+          "description": "Reads a BPMN diagram as an AND/OR graph — tasks are activities, gateways are mediators, an inclusive gateway the exclusive choice over its non-empty parallel bindings — and reduces it to its signature. Start and end events are boundary, per the instance map of Section 4.4.",
+          "inputs": [
+            "Bpmn"
+          ],
+          "outputs": [
+            "CospanSignature"
+          ],
+          "runtime": "pyodide"
+        },
+        {
+          "id": "run.promenade.string-diagram.compare",
+          "label": "Compare signatures",
+          "description": "Compares two cospan signatures generator for generator. Equal means the two models have the same structure and admit the same traces (Theorem 6); contained means every trace of one is a trace of the other (Corollary 3.1), and the report names each generator the larger model adds. Because both sides are signatures, the two models need not be in the same notation.",
+          "inputs": [
+            "CospanSignature",
+            "CospanSignature"
+          ],
+          "outputs": [
+            "SignatureComparison"
+          ],
+          "runtime": "pyodide"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.1.0",
+          "url": "packages/run.promenade.string-diagram-0.1.0.pmplugin",
+          "sha256": "34643f2918fb5ec3dfdb5ad03845c4993cacf8f305dbe2c1a39f2dc5b48fad6b",
+          "bytes": 35676,
+          "released": "2026-09-21",
+          "changelog": "First release. A model in any of four notations — object-centric Petri net, Petri net, process tree, BPMN — reduces by one construction to its cospan signature: which activity hands which typed object to which other activity, with the place, gateway or operator node that carried it discarded. Compare two signatures and the verdict is a certificate: equal means the same structure and the same traces, contained means every trace of one is a trace of the other, and the report names each generator the larger model adds. Because both sides are signatures the two models need not be in the same notation. Variable arcs carry through as object multiplicity, so two OCPNs differing only in one are not reported as the same model. Implements Lee, Tiňo and Styles, arXiv:2609.20478; gated on a differential against the authors' own proc-posets plus the paper's theorems over randomised models."
         }
       ]
     },
@@ -3574,16 +3925,78 @@
       ]
     },
     {
+      "id": "run.promenade.trace-clustering",
+      "name": "Trace Clustering",
+      "description": "A model of a log that contains three different ways of working is a model of none of them. Trace clustering groups the cases by how they behave — by what they do, in what order, by whom, and how long they take — so each group can be mined on its own. Every group can be turned into a log of its own from the Clusters panel, without copying a single event.",
+      "runtime": "wasm + view",
+      "authors": [
+        {
+          "name": "Promenade Team"
+        }
+      ],
+      "citation": {
+        "text": "Song, M., Günther, C.W. and van der Aalst, W.M.P. (2008). Trace clustering in process mining. In: BPM 2008 International Workshops, LNBIP 17, pp. 109–120. Springer. The silhouette is Rousseeuw, P.J. (1987), J. Comput. Appl. Math. 20, 53–65; the nearest-neighbour chain algorithm is Müllner, D. (2011), arXiv:1109.2378.",
+        "doi": "10.1007/978-3-642-00328-8_11",
+        "bibtex": "@inproceedings{song2008traceclustering,\n  title     = {Trace Clustering in Process Mining},\n  author    = {Song, Minseok and G{\\\"u}nther, Christian W. and van der Aalst, Wil M. P.},\n  booktitle = {Business Process Management Workshops (BPM 2008)},\n  series    = {LNBIP},\n  volume    = {17},\n  pages     = {109--120},\n  year      = {2009},\n  publisher = {Springer},\n  doi       = {10.1007/978-3-642-00328-8_11}\n}"
+      },
+      "keywords": [
+        "trace-clustering",
+        "profiles",
+        "hierarchical-clustering",
+        "silhouette",
+        "sublogs",
+        "rust"
+      ],
+      "provides": [
+        "TraceClustering"
+      ],
+      "renders": [
+        "TraceClustering"
+      ],
+      "accepts": [
+        "TraditionalEventLog"
+      ],
+      "consumes": [
+        "TraceClustering",
+        "TraditionalEventLog"
+      ],
+      "actions": [
+        {
+          "id": "run.promenade.trace-clustering.cluster",
+          "label": "Cluster the cases",
+          "description": "Turns every case into a profile — how often it does each activity, which activities follow which, who worked on it, how long it took — and joins the closest profiles over and over into a tree. Cutting that tree at any number of clusters is instant, and the silhouette says where cutting it found something.",
+          "inputs": [
+            "TraditionalEventLog"
+          ],
+          "outputs": [
+            "TraceClustering"
+          ],
+          "runtime": "wasm"
+        }
+      ],
+      "versions": [
+        {
+          "version": "0.1.0",
+          "url": "packages/run.promenade.trace-clustering-0.1.0.pmplugin",
+          "sha256": "9620271a036a5096c379a77b80cc606d1d37e9a57c293bf14ed047c83c46da0b",
+          "bytes": 244254
+        },
+        {
+          "version": "0.1.1",
+          "url": "packages/run.promenade.trace-clustering-0.1.1.pmplugin",
+          "sha256": "d4d9385b1d403022dc276ac2ac002d3c0d69c9ceef882241542d85e88b951607",
+          "bytes": 244316
+        }
+      ]
+    },
+    {
       "id": "run.promenade.tree-generator",
       "name": "Process Tree Generator",
       "description": "Draws a random process tree from a parameterised distribution, after Jouck and Depaire's PTandLogGenerator: how many activities, how much concurrency, how many loops, whether there are silent steps or duplicate labels. It is what an evaluation needs that real logs cannot give — a model whose properties were chosen rather than observed, and known exactly before any log exists. Play the tree out and the whole ground truth of the resulting log is known too.",
       "runtime": "wasm",
       "authors": [
         {
-          "name": "István Koren",
-          "email": "korenistvan@inf.elte.hu",
-          "affiliation": "ELTE University Budapest, Data Science and Engineering",
-          "orcid": "0000-0003-1350-6732"
+          "name": "Promenade Team"
         }
       ],
       "citation": {
@@ -3621,6 +4034,12 @@
           "url": "packages/run.promenade.tree-generator-0.1.0.pmplugin",
           "sha256": "381448cf747eeeeada4c8005c807db3e0111c7a1e6cf6fadd75e9600ee4deb2a",
           "bytes": 52292
+        },
+        {
+          "version": "0.1.1",
+          "url": "packages/run.promenade.tree-generator-0.1.1.pmplugin",
+          "sha256": "a1e1724313e9dcaa633a17df902b6938eef1017b4049fe2ea67ae201ae31e9dc",
+          "bytes": 52326
         }
       ]
     }

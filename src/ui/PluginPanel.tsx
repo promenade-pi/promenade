@@ -220,7 +220,8 @@ export function PluginPanel({
    * they are decisions about the catalog rather than about this frame.
    */
   onDeriveLog?: (
-    boundArtifactId: string, ops: unknown[]
+    boundArtifactId: string, ops: unknown[],
+    opts?: { group?: string; name?: string }
   ) => Promise<{ id: string; name: string; applied: number }>;
   /**
    * Which registered view this frame is — `ViewDef.id`.
@@ -524,7 +525,11 @@ export function PluginPanel({
           }
           const ops = Array.isArray(m.payload?.ops) ? m.payload.ops : [];
           if (!ops.length) throw new Error('No operations to apply.');
-          const result = await onDeriveLog(artifact.id, ops);
+          const opts = m.payload?.opts && typeof m.payload.opts === 'object' ? m.payload.opts : {};
+          const result = await onDeriveLog(artifact.id, ops, {
+            group: typeof opts.group === 'string' ? opts.group : undefined,
+            name: typeof opts.name === 'string' ? opts.name : undefined,
+          });
           currentPort?.postMessage({ type: 'result', id: m.id, payload: result });
         } catch (err: any) {
           currentPort?.postMessage({ type: 'error', id: m.id, error: String(err.message ?? err) });

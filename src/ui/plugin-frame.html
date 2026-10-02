@@ -268,11 +268,18 @@
          * different fixes builds one repaired log with two steps, not two
          * artifacts — and the source is never modified.
          *
+         * `opts.group` separates derivations that must not share an
+         * artifact. Repairs accumulate because two fixes for one log belong
+         * together; two clusters of the same log do not — anded into one plan
+         * they would keep no case at all. A distinct group therefore gets its
+         * own derived log, found again by that group on a later call, and
+         * `opts.name` is the name to give it when it is first created.
+         *
          * Requires `derivesLogs` in the view's manifest entry. Resolves to
          * `{ id, name, applied }`.
          */
-        deriveLog: function (ops) {
-          return rpc('deriveLog', { ops: ops || [] });
+        deriveLog: function (ops, opts) {
+          return rpc('deriveLog', { ops: ops || [], opts: opts || {} });
         },
 
         /** Stable colour for a domain value, assigned once by the host. */

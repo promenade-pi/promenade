@@ -1286,12 +1286,15 @@ a.pd-author-line:hover, .pd-link:hover { text-decoration: underline; color: var(
 .trace-chevron.open { transform: rotate(90deg); }
 .trace-rank { color: var(--text-dim); font-variant-numeric: tabular-nums; width: 20px; }
 .trace-sort { border: 0; padding: 0; background: transparent; color: var(--text-dim); font: inherit; font-weight: inherit; display: inline-flex; gap: 4px; align-items: center; }
-.trace-sort:hover, .trace-sort.active { color: var(--text); background: transparent; }
+.trace-sort:hover:not(:disabled), .trace-sort.active { color: var(--text); background: transparent; }
 .trace-sort span { color: var(--accent); font-size: 12px; }
 .trace-path { display: flex; align-items: center; min-width: 0; gap: 2px; row-gap: 4px; flex-wrap: wrap; white-space: normal; }
 .trace-step { --activity-color: var(--accent); position: relative; max-width: min(104px, 100%); min-width: 38px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border: 0; border-radius: 0; padding: 4px 13px 4px 9px; font-size: 10.5px; line-height: 14px; color: #fff; background: var(--activity-color); clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 50%, calc(100% - 7px) 100%, 0 100%, 7px 50%); }
 .trace-step:first-child { clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 50%, calc(100% - 7px) 100%, 0 100%); padding-left: 8px; }
-.trace-step:hover { filter: brightness(1.08); background: var(--activity-color); }
+/* `:not(:disabled)` is there for specificity, not meaning: the global
+ * `button:hover:not(:disabled)` would otherwise outrank this and paint the
+ * chip the pale sunken grey, leaving its white label unreadable. */
+.trace-step:hover:not(:disabled) { filter: brightness(1.08); background: var(--activity-color); }
 .trace-step.selected { outline: 2px solid var(--accent); outline-offset: -2px; filter: saturate(1.25) brightness(.94); }
 .trace-more { margin-left: 3px; min-width: 21px; height: 20px; padding: 0 5px; border: 1px solid var(--border); border-radius: 10px; color: var(--text-dim); font-size: 10px; display: inline-flex; align-items: center; justify-content: center; }
 .trace-detail-row td { padding-top: 0; background: var(--bg-soft); }
@@ -1305,11 +1308,20 @@ a.pd-author-line:hover, .pd-link:hover { text-decoration: underline; color: var(
 .trace-legend > input { margin: 7px 8px; width: auto; min-width: 0; font-size: 11px; }
 .trace-legend-list { display: flex; flex-wrap: wrap; align-items: center; gap: 1px 4px; padding: 5px 7px 5px 0; max-height: 84px; overflow: auto; }
 .trace-legend-row { width: auto; max-width: 220px; display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; align-items: center; gap: 6px; text-align: left; border: 0; padding: 4px 6px; background: transparent; font-size: 11px; }
-.trace-legend-row:hover, .trace-legend-row.selected { background: var(--accent-soft); }
+.trace-legend-row:hover:not(:disabled), .trace-legend-row.selected { background: var(--accent-soft); }
 .trace-legend-row i { width: 9px; height: 9px; border-radius: 50%; }
 .trace-legend-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .trace-legend-row b { font-size: 10px; color: var(--text-dim); font-weight: 500; font-variant-numeric: tabular-nums; }
 .trace-cases { max-width: none; }
+/* The Events table grows a column per attribute, so unlike the Cases &
+ * variants tables it can outgrow the panel — it scrolls sideways inside its
+ * own frame (the panel itself clips x-overflow), with cells kept on one line
+ * so a wide log reads as columns rather than as a wall of wrapped text. */
+.event-table-wrap { overflow-x: auto; }
+.event-toolbar { flex-wrap: wrap; justify-content: flex-start; }
+.event-toolbar input { flex: 1 1 200px; min-width: 0; }
+.event-table th, .event-table td { white-space: nowrap; }
+.event-table td { max-width: 320px; overflow: hidden; text-overflow: ellipsis; }
 .trace-case-id { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .trace-pagination { display: flex; align-items: center; justify-content: flex-end; gap: 12px; min-height: 45px; padding: 7px 10px; box-sizing: border-box; color: var(--text-dim); font-size: 11px; border-top: 1px solid var(--border); }
 .trace-pagination label { display: flex; align-items: center; gap: 5px; margin-right: auto; }
@@ -1802,6 +1814,101 @@ a.pd-author-line:hover, .pd-link:hover { text-decoration: underline; color: var(
 .tf-merge-list span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tf-merge-list small { color: var(--text-dim); font-variant-numeric: tabular-nums; }
 
+/* ------------------------------------------- flatten impact preview
+   Convergence, deficiency and divergence made visible while the case notion
+   is still being chosen.  Same rule as the filter builders below: CSS only,
+   no chart runtime, because this redraws on every keystroke in the picker. */
+.tf-flatten { margin-top: 7px; display: flex; flex-direction: column; gap: 9px; }
+.tf-link-btn {
+  border: 0; background: transparent; padding: 0; font: inherit; font-size: 11.5px;
+  color: var(--accent); cursor: pointer; text-align: left;
+}
+.tf-link-btn:hover { text-decoration: underline; background: transparent; }
+
+.tf-impact { border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 9px; background: var(--bg-soft); }
+.tf-impact-head { display: flex; align-items: center; gap: 7px; font-size: 12px; }
+.tf-impact-body { display: flex; align-items: center; gap: 9px; margin-top: 8px; }
+.tf-impact-arrow { color: var(--text-dim); flex: none; }
+.tf-impact-end {
+  flex: none; min-width: 84px; text-align: center; padding: 6px 8px;
+  border: 1px solid var(--border); border-radius: 5px; background: var(--bg);
+}
+.tf-impact-end b { display: block; font-size: 14px; font-variant-numeric: tabular-nums; }
+.tf-impact-end small { color: var(--text-dim); font-size: 10px; }
+.tf-impact-mid { flex: 1; min-width: 0; }
+.tf-impact-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 10.5px; color: var(--text-dim); }
+.tf-impact-legend b { color: var(--text); font-variant-numeric: tabular-nums; }
+.tf-impact-bar { display: flex; height: 13px; margin: 4px 0 4px; border-radius: 3px; overflow: hidden; background: var(--bg-sunken); }
+.tf-impact-bar > i { display: block; height: 100%; }
+.tf-impact-net { font-size: 10.5px; color: var(--text-dim); }
+
+/* One tone per problem, held to wherever the split is shown: the bar, the
+   comparison meters and the diagnosis cards all read the same way. */
+.tf-seg-kept { color: var(--ok); }
+.tf-seg-dup { color: var(--warn); }
+.tf-seg-drop { color: var(--danger); }
+i.tf-seg-kept { background: var(--ok); }
+i.tf-seg-dup { background: var(--warn); }
+i.tf-seg-copies { background: var(--warn); opacity: .42; }
+i.tf-seg-drop { background: var(--danger); }
+
+.tf-dist { text-transform: capitalize; }
+.tf-dist-low { color: var(--ok); border-color: var(--ok); }
+.tf-dist-medium { color: var(--warn); border-color: var(--warn); }
+.tf-dist-high { color: var(--danger); border-color: var(--danger); }
+.tf-recommended { color: var(--ok); border-color: var(--ok); background: var(--bg-soft); margin-left: 4px; }
+
+.tf-compare-title, .tf-diagnosis-title { font-size: 11.5px; font-weight: 650; margin-bottom: 5px; }
+.tf-compare-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+.tf-compare-table th {
+  text-align: left; font-weight: 600; font-size: 10px; text-transform: uppercase;
+  letter-spacing: .04em; color: var(--text-dim); padding: 3px 6px;
+  border-bottom: 1px solid var(--border);
+}
+.tf-compare-table td { padding: 4px 6px; border-bottom: 1px solid var(--border); }
+.tf-compare-table td.n, .tf-compare-table .n { font-variant-numeric: tabular-nums; }
+.tf-compare-table tbody tr { cursor: pointer; }
+.tf-compare-table tbody tr:hover { background: var(--bg-soft); }
+.tf-compare-table tbody tr.selected { background: var(--accent-soft); }
+.tf-compare-table tbody tr.selected .tf-link-btn { font-weight: 650; }
+.tf-act-table tbody tr { cursor: default; }
+.tf-act-table { margin-top: 5px; }
+.tf-all-dropped { color: var(--danger); }
+.tf-meter {
+  display: inline-block; width: 46px; height: 6px; margin-right: 6px;
+  vertical-align: middle; border-radius: 99px; background: var(--bg-sunken); overflow: hidden;
+}
+.tf-meter > i { display: block; height: 100%; }
+
+.tf-problems { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 7px; }
+.tf-problem {
+  border: 1px solid var(--border); border-left-width: 3px; border-radius: var(--radius);
+  padding: 7px 9px; background: var(--bg);
+}
+.tf-problem.wide { grid-column: 1 / -1; }
+.tf-problem-warn { border-left-color: var(--warn); }
+.tf-problem-danger { border-left-color: var(--danger); }
+.tf-problem-experimental { border-left-color: var(--experimental); }
+.tf-problem-head { display: flex; align-items: center; gap: 6px; }
+.tf-problem-title { font-size: 11.5px; font-weight: 650; }
+.tf-problem-warn .tf-problem-title { color: var(--warn); }
+.tf-problem-danger .tf-problem-title { color: var(--danger); }
+.tf-problem-experimental .tf-problem-title { color: var(--experimental); }
+.tf-copies-chip { color: var(--warn); border-color: var(--warn); font-variant-numeric: tabular-nums; }
+.tf-problem-lead { margin: 4px 0 0; font-size: 11.5px; line-height: 1.45; }
+.tf-problem-items {
+  margin: 5px 0 0; padding-left: 15px; font-size: 11px; color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+.tf-disclose { margin-top: 3px; }
+
+.tf-falseloop { display: flex; align-items: center; gap: 9px; margin-top: 6px; }
+.tf-falseloop svg { width: 160px; height: 45px; flex: none; color: var(--experimental); }
+.tf-fl-box { fill: var(--bg-soft); stroke: var(--border); }
+.tf-fl-text { fill: var(--text); font-size: 11px; font-family: inherit; }
+.tf-fl-loop { stroke: var(--experimental); stroke-width: 1.6; }
+.tf-falseloop-cap { font-size: 10.5px; color: var(--text-dim); }
+
 /* Filter builders deliberately make the data distribution visible before a
    user commits a subset.  The short bar chart is CSS-only (no chart runtime),
    so it stays quick even while a transform is edited repeatedly. */
@@ -2188,6 +2295,14 @@ a.pd-author-line:hover, .pd-link:hover { text-decoration: underline; color: var(
 .ov-stat { border: 1px solid var(--border); border-radius: 10px; background: var(--bg-soft); padding: 12px 14px; }
 .ov-stat-value { font-size: 26px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
 .ov-stat-label { font-size: 11px; color: var(--text-dim); margin-top: 3px; }
+.ov-stat--link {
+  cursor: pointer; text-align: left; font: inherit; color: inherit; width: 100%;
+  transition: border-color .1s, background .1s;
+}
+.ov-stat--link:hover { border-color: var(--accent); background: var(--accent-soft); }
+.ov-stat--link:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.ov-stat-label--link { display: flex; align-items: center; gap: 3px; }
+.ov-stat-label--link .ov-stat-arrow { opacity: .6; }
 
 /* `auto-fit`/`minmax`, not a media query: a panel narrows independently of
  * the viewport (docked beside the artifact tree and Inspector), so the
@@ -2461,3 +2576,59 @@ table.ov-table tr:hover td { background: var(--bg-sunken); }
 .gal-chain-n { margin-left: auto; flex: none; font-variant-numeric: tabular-nums; }
 .gal-card-basis { font-weight: 400; font-size: 13px; color: var(--text-dim); }
 .gal-b.two { background: color-mix(in srgb, var(--experimental) 14%, transparent); color: var(--experimental); }
+
+/* Combobox (ui/Combobox.tsx): replaces <datalist>, whose suggestions filter
+ * by the field's own value and so collapse to one entry once a value is set.
+ * The strict form is a select (button + chevron); the free form a text field
+ * with a chevron toggle sitting inside its right edge. */
+.combobox { position: relative; display: inline-flex; align-items: center; min-width: 0; vertical-align: middle; }
+.combobox-chevron { flex: none; color: var(--text-dim); }
+.combobox .combobox-input { padding-right: 22px !important; width: 100%; box-sizing: border-box; }
+.combobox-toggle {
+  position: absolute; right: 2px; top: 50%; transform: translateY(-50%);
+  display: grid; place-items: center; width: 18px; height: 18px; padding: 0;
+  border: 0; border-radius: 4px; background: transparent; cursor: pointer;
+}
+.combobox-toggle:hover:not(:disabled) { background: var(--bg-sunken); }
+.combobox-trigger {
+  display: inline-flex; align-items: center; justify-content: space-between; gap: 8px;
+  min-width: 140px; max-width: 280px; min-height: 24px; box-sizing: border-box;
+  padding: 2px 6px 2px 8px; font: inherit; font-size: 12px; text-align: left; color: var(--text);
+  background: var(--bg); border: 1px solid color-mix(in srgb, var(--border), var(--text) 22%); border-radius: 5px; cursor: pointer;
+}
+.combobox-trigger:hover:not(:disabled) { background: var(--bg); border-color: var(--text-dim); }
+.combobox-trigger:focus-visible, .combobox-trigger[aria-expanded="true"] { outline: 2px solid var(--accent); outline-offset: -1px; border-color: var(--accent); }
+.combobox-trigger.invalid { border-color: var(--warn); }
+.combobox-trigger-value, .combobox-placeholder { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.combobox-placeholder { color: var(--text-dim); }
+.tf-edit-form .combobox-trigger { min-height: 30px; }
+
+.combobox-pop {
+  z-index: 2000; display: flex; flex-direction: column; overflow: hidden;
+  border: 1px solid var(--border); border-radius: 8px; background: var(--bg);
+  box-shadow: 0 8px 28px var(--shadow-lg); font-size: 12px; color: var(--text);
+}
+.combobox-search {
+  margin: 4px 4px 0; padding: 5px 8px; font: inherit; font-size: 12px; color: var(--text);
+  background: var(--bg-soft); border: 1px solid var(--border); border-radius: 5px; outline: none;
+}
+.combobox-search:focus { border-color: var(--accent); }
+.combobox-options { margin: 0; padding: 4px; list-style: none; overflow-y: auto; }
+.combobox-option {
+  display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; align-items: center; gap: 6px;
+  min-height: 26px; padding: 2px 8px 2px 4px; border-radius: 5px; cursor: pointer;
+}
+.combobox-option.active { background: var(--bg-soft); }
+.combobox-option.current { font-weight: 600; }
+.combobox-option.missing small { color: var(--warn); }
+.combobox-check { color: var(--accent); font-size: 11px; text-align: center; }
+.combobox-value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.combobox-option small { color: var(--text-dim); font-variant-numeric: tabular-nums; font-weight: 400; }
+.combobox-empty { padding: 6px 8px; color: var(--text-dim); }
+.tf-shared-attr {
+  margin-top: 7px; padding: 6px 8px; border: 1px solid var(--warn); border-radius: 6px;
+  background: var(--bg-soft); font-size: 11.5px; line-height: 1.5;
+}
+.tf-shared-attr-types { display: inline-flex; flex-wrap: wrap; gap: 4px; margin-left: 6px; vertical-align: middle; }
+.tf-shared-attr-types .chip { cursor: pointer; font-size: 11px; }
+.tf-shared-attr-types small { color: var(--text-dim); margin-left: 3px; }

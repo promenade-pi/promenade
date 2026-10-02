@@ -10,6 +10,7 @@
  */
 
 import type { Artifact, ArtifactId, ArtifactTypeId, ExecutionTimingPhase } from '../artifact/types';
+import type { LogicalColumn } from '../relational/types';
 
 /** JSON Schema subset the host renders native controls from. */
 export interface ParamSchema {
@@ -334,6 +335,44 @@ export interface ActionContext {
      * the written tables — the same space `showWhen` conditions and
      * downstream actions already read artifact facts from.
      */
+    meta?: Record<string, unknown>;
+  }) => Promise<Artifact>;
+  /**
+   * Writes a **table-shaped** artifact: named relations of rows, stored and
+   * queried exactly as a log's are, but with a schema the *plugin* declares.
+   *
+   * The third shape a package can contribute, after an inline blob and a log.
+   * A feature matrix, a metrics table, a per-resource summary: data whose
+   * whole point is that someone else queries, joins, exports or models on it,
+   * and for which an inline blob — opaque to SQL, to every table view and to
+   * every notebook — is the wrong container.
+   *
+   * `type` must be one this package's manifest declares with a `table` schema
+   * (`PluginManifest.artifactTypes[].table`). `relations` are the columns,
+   * keyed by relation and column name; the host checks them against that
+   * declaration and writes the storage itself (`host/artifact/table-rows.ts`),
+   * so a package can put rows into the catalog but never storage of its own
+   * devising — the same rule `persistLog`'s `rows` form follows, and for the
+   * same reason.
+   *
+   * A relation the plugin declared `open` may carry columns the manifest
+   * could not have named — one per activity in the log, say. Those are typed
+   * from their values; the declared ones are still required and still checked.
+   * Timestamps are epoch microseconds, as in `persistLog`.
+   */
+  persistTable: (opts: {
+    type: ArtifactTypeId;
+    name: string;
+    /** Relation -> column -> values. */
+    relations: Record<string, Record<string, ArrayLike<unknown>>>;
+    /** The declaring manifest's own schema for `type`, passed through by the adapter. */
+    schema: Array<{
+      name: string;
+      open?: boolean;
+      columns: Array<{ name: string; type: LogicalColumn['type']; required?: boolean }>;
+    }>;
+    inputs: Record<string, ArtifactId[]>;
+    /** A producer's own facts, merged over the summary the host computes. */
     meta?: Record<string, unknown>;
   }) => Promise<Artifact>;
   /**

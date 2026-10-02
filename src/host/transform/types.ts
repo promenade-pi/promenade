@@ -45,6 +45,37 @@ export interface RelationCountCondition {
   max?: number;
 }
 
+/**
+ * How an attribute filter tests a value.
+ *
+ * Every mode reads "keep the entity that has *a value* of this attribute
+ * that …" — except the negative ones (`missing`, `notEquals`, `noneOf`,
+ * `notContains`), which are the exact complement of their positive twin:
+ * "does not equal X" also keeps entities that never carry the attribute,
+ * the same way pm4py's `positive=False` drops only the matches. With
+ * time-dependent OCEL object attributes, "a value" means any recorded one.
+ *
+ * Text comparisons other than `equals`/`oneOf` are case-insensitive. Numeric
+ * and date modes skip values that do not parse as one, rather than failing.
+ */
+export type AttributeFilterMode =
+  | 'has' | 'missing'
+  | 'equals' | 'notEquals' | 'oneOf' | 'noneOf'
+  | 'contains' | 'notContains' | 'startsWith' | 'endsWith' | 'regex'
+  | 'atLeast' | 'atMost' | 'numberRange'
+  | 'onOrAfter' | 'onOrBefore' | 'dateRange';
+
+export const ATTRIBUTE_FILTER_MODES: readonly AttributeFilterMode[] = [
+  'has', 'missing', 'equals', 'notEquals', 'oneOf', 'noneOf',
+  'contains', 'notContains', 'startsWith', 'endsWith', 'regex',
+  'atLeast', 'atMost', 'numberRange', 'onOrAfter', 'onOrBefore', 'dateRange',
+];
+
+/** The modes whose result is the complement of another mode's. */
+export const NEGATED_ATTRIBUTE_MODE: Partial<Record<AttributeFilterMode, AttributeFilterMode>> = {
+  missing: 'has', notEquals: 'equals', noneOf: 'oneOf', notContains: 'contains',
+};
+
 export type TransformOp = { /** Inactive operations stay in the plan but are not compiled. */ disabled?: boolean } & (
   | {
       kind: 'renameActivity';
@@ -116,20 +147,39 @@ export type TransformOp = { /** Inactive operations stay in the plan but are not
   | {
       /** Event attribute predicate; XES event attributes use the same shape. */
       kind: 'filterEventAttribute';
+      /**
+       * Restricts the test to events of this activity (event type); events of
+       * every other activity are kept untouched. Attributes are per event
+       * type — two activities may both carry a `price`, with different
+       * meanings or value kinds — so without this, one test is applied to all
+       * of them and every event lacking the attribute is dropped with it.
+       */
+      activity?: string;
       key: string;
-      mode: 'has' | 'equals' | 'contains' | 'numberRange';
+      mode: AttributeFilterMode;
       value: string;
+      /** `oneOf` / `noneOf`. */
+      values?: string[];
+      /** `atLeast` / `atMost` / `numberRange`. */
       min?: number;
       max?: number;
+      /** `onOrAfter` / `onOrBefore` / `dateRange`: ISO date or datetime strings. */
+      from?: string;
+      to?: string;
     }
   | {
       /** Object attribute predicate; on XES this means a case attribute. */
       kind: 'filterObjectAttribute';
+      /** OCEL only: restricts the test to objects of this type; others are kept. See `activity` above. */
+      objectType?: string;
       key: string;
-      mode: 'has' | 'equals' | 'contains' | 'numberRange';
+      mode: AttributeFilterMode;
       value: string;
+      values?: string[];
       min?: number;
       max?: number;
+      from?: string;
+      to?: string;
     }
   | {
       /** OCEL only: retain events by per event-type/object-type E2O counts. */
@@ -158,6 +208,22 @@ export type TransformOp = { /** Inactive operations stay in the plan but are not
       /** Keeps or drops whole cases by what they contain. */
       mode: 'contains' | 'notContains';
       activity: string;
+    }
+  | {
+      /**
+       * Keeps exactly the listed cases and drops every other one.
+       *
+       * Unlike every other filter here, the condition is not a property of the
+       * log: it is a set of cases some analysis already decided on — a cluster,
+       * the non-fitting cases of a conformance check, a hand-picked sample —
+       * and this is how that decision becomes a log the rest of the workspace
+       * can mine. The ids are `trace_idx`, which is the only case identity a
+       * plugin ever sees, and the label is what the set *meant* so the plan
+       * stays readable once the analysis that produced it is gone.
+       */
+      kind: 'keepCases';
+      traces: number[];
+      label?: string;
     }
   | {
       kind: 'variantMinCases';
@@ -322,10 +388,23 @@ export type TransformOp = { /** Inactive operations stay in the plan but are not
        *
        * Each object of the chosen type becomes a case; the events related to it
        * become that case's events. This is the standard bridge, and it is lossy
-       * in two well-known ways that the editor reports rather than hides:
-       * an event related to several objects of the type is **duplicated**
-       * (convergence), and an event related to none is **dropped**
-       * (divergence).
+       * in three well-known ways, which `ui/views/FlattenImpact.tsx` measures
+       * and names before the choice is committed rather than warning about in
+       * prose afterwards:
+       *
+       *  - **convergence** — an event related to several objects of the type is
+       *    duplicated into each of their cases, inflating every frequency;
+       *  - **deficiency** — an event related to none is dropped outright, and
+       *    an activity can vanish from the log entirely this way;
+       *  - **divergence** — an activity belonging to a *different* object type
+       *    repeats inside one case with no order relation between the
+       *    occurrences, which discovery reads as a loop or as concurrency that
+       *    the process does not have.
+       *
+       * The first two change how many events there are and partly cancel in a
+       * net count; the third changes nothing countable at all. Earlier comments
+       * here called the dropping "divergence", which is the standard name for
+       * the third problem, not the second.
        */
       kind: 'flattenByObjectType';
       objectType: string;
@@ -355,6 +434,7 @@ export const OP_LABEL: Record<TransformOpKind, string> = {
   filterO2oCount: 'Filter by O2O count',
   timeRange: 'Time range',
   filterCases: 'Filter cases',
+  keepCases: 'Keep selected cases',
   variantMinCases: 'Filter by variant frequency',
   removeAttribute: 'Remove attribute',
   removeEventAttributes: 'Edit event attributes',
@@ -395,6 +475,7 @@ export const OP_GROUP: Record<TransformOpKind, 'Edit' | 'Filter' | 'Structure' |
   filterO2oCount: 'Filter',
   timeRange: 'Filter',
   filterCases: 'Filter',
+  keepCases: 'Filter',
   variantMinCases: 'Filter',
   removeAttributes: 'Repair',
   disambiguateEventOrder: 'Repair',
@@ -472,6 +553,7 @@ export const OP_PHASE: Record<TransformOpKind, number> = {
   filterO2oCount: 7,
   timeRange: 7,
   filterCases: 7,
+  keepCases: 7,
   variantMinCases: 7,
   dropImplausibleTimestamps: 8,
   disambiguateEventOrder: 9,
@@ -507,6 +589,7 @@ export function newOp(kind: TransformOpKind): TransformOp {
     case 'filterO2oCount': return { kind };
     case 'timeRange': return { kind };
     case 'filterCases': return { kind, mode: 'contains', activity: '' };
+    case 'keepCases': return { kind, traces: [] };
     case 'variantMinCases': return { kind, minCases: 2 };
     case 'removeAttribute': return { kind, scope: 'event', key: '' };
     case 'removeEventAttributes': return { kind, activity: '', keys: [] };
@@ -550,7 +633,10 @@ export function describeOp(op: TransformOp): string {
       return `${op.mode} ${op.values.length ? op.values.length + ' selected' : `${op.minFrequency}–${op.maxFrequency}% frequency`}`;
     case 'filterEventAttribute':
     case 'filterObjectAttribute':
-      return `${op.key || '…'} · ${op.mode === 'numberRange' ? `${op.min ?? '…'}–${op.max ?? '…'}` : op.mode}`;
+      {
+        const scope = op.kind === 'filterEventAttribute' ? op.activity : op.objectType;
+        return `${scope ? `${scope} · ` : ''}${op.key || '…'} ${describeAttributeTest(op)}`;
+      }
     case 'filterE2oCount':
     case 'filterO2oCount':
       return op.conditions?.length
@@ -560,6 +646,8 @@ export function describeOp(op: TransformOp): string {
       return [op.from ? op.from.replace('T', ' ') : '…', op.to ? op.to.replace('T', ' ') : '…'].join(' → ');
     case 'filterCases':
       return `${op.mode === 'contains' ? 'contains' : 'does not contain'} “${op.activity}”`;
+    case 'keepCases':
+      return `${op.label ? `${op.label} · ` : ''}${op.traces.length} case${op.traces.length === 1 ? '' : 's'}`;
     case 'variantMinCases':
       return `variant occurs in ≥ ${op.minCases} cases`;
     case 'removeAttribute':
@@ -617,13 +705,12 @@ export function isComplete(op: TransformOp): boolean {
     case 'filterObjectTypes': return op.values.length > 0 || op.minFrequency > 0 || op.maxFrequency < 100;
     case 'filterEventAttribute':
     case 'filterObjectAttribute':
-      return !!op.key && (op.mode === 'has' || op.mode === 'numberRange'
-        ? op.min != null || op.max != null || op.mode === 'has'
-        : !!op.value);
+      return !!op.key && attributeTestComplete(op);
     case 'filterE2oCount': return !!op.conditions?.some((c) => c.min != null || c.max != null) || op.min != null || op.max != null;
     case 'filterO2oCount': return !!op.conditions?.some((c) => c.min != null || c.max != null) || op.min != null || op.max != null;
     case 'timeRange': return !!(op.from || op.to);
     case 'filterCases': return !!op.activity;
+    case 'keepCases': return op.traces.length > 0;
     case 'variantMinCases': return op.minCases > 1;
     case 'removeAttribute': return !!op.key;
     case 'removeEventAttributes': return !!op.activity && op.keys.length > 0;
@@ -646,4 +733,61 @@ export function isComplete(op: TransformOp): boolean {
     case 'pseudonymiseAttributes': return op.names.length > 0;
     case 'removeAttributes': return op.names.length > 0;
   }
+}
+
+type AttributeFilterOp = Extract<TransformOp, { kind: 'filterEventAttribute' | 'filterObjectAttribute' }>;
+
+/** Whether the mode's own operand is filled in — the key is checked by the caller. */
+function attributeTestComplete(op: AttributeFilterOp): boolean {
+  switch (op.mode) {
+    case 'has': case 'missing': return true;
+    case 'oneOf': case 'noneOf': return (op.values?.length ?? 0) > 0;
+    case 'atLeast': return op.min != null && Number.isFinite(op.min);
+    case 'atMost': return op.max != null && Number.isFinite(op.max);
+    case 'numberRange': return op.min != null || op.max != null;
+    case 'onOrAfter': return !!op.from;
+    case 'onOrBefore': return !!op.to;
+    case 'dateRange': return !!(op.from || op.to);
+    case 'regex':
+      // DuckDB's RE2 rejects a pattern at query time, which would fail the
+      // whole derived log while it is still being typed. JS's parser is a
+      // close-enough gate for "not finished yet".
+      return !!op.value && regexProblem(op.value) == null;
+    default: return !!op.value;
+  }
+}
+
+function describeAttributeTest(op: AttributeFilterOp): string {
+  const list = (vs?: string[]) => vs?.length
+    ? (vs.length <= 2 ? vs.map((v) => `“${v}”`).join(', ') : `${vs.length} values`) : '…';
+  const q = (v: string) => (v ? `“${v}”` : '…');
+  switch (op.mode) {
+    case 'has': return 'is present';
+    case 'missing': return 'is missing';
+    case 'equals': return `= ${q(op.value)}`;
+    case 'notEquals': return `≠ ${q(op.value)}`;
+    case 'oneOf': return `∈ ${list(op.values)}`;
+    case 'noneOf': return `∉ ${list(op.values)}`;
+    case 'contains': return `contains ${q(op.value)}`;
+    case 'notContains': return `does not contain ${q(op.value)}`;
+    case 'startsWith': return `starts with ${q(op.value)}`;
+    case 'endsWith': return `ends with ${q(op.value)}`;
+    case 'regex': return `matches /${op.value || '…'}/`;
+    case 'atLeast': return `≥ ${op.min ?? '…'}`;
+    case 'atMost': return `≤ ${op.max ?? '…'}`;
+    case 'numberRange': return `${op.min ?? '…'}–${op.max ?? '…'}`;
+    case 'onOrAfter': return `on or after ${op.from || '…'}`;
+    case 'onOrBefore': return `on or before ${op.to || '…'}`;
+    case 'dateRange': return `${op.from || '…'} → ${op.to || '…'}`;
+  }
+}
+
+/**
+ * Why DuckDB would reject this pattern, or null. Checked with JS's parser,
+ * which is close to RE2 for everyday patterns; RE2's leading flag group
+ * (`(?i)abc`, the usual way to ignore case) is not JS syntax, so it is
+ * stripped before the check rather than reported as an error.
+ */
+export function regexProblem(pattern: string): string | null {
+  try { new RegExp(pattern.replace(/^\(\?[imsU]+\)/, '')); return null; } catch (e) { return (e as Error).message; }
 }

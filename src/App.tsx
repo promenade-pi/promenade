@@ -735,6 +735,12 @@ export function App() {
       name?: string;
       meta?: Record<string, unknown>;
       seed?: { type: string; tables: string[] };
+      /**
+       * Whether to open the plan editor on the new log. A plan a user started
+       * by hand is empty and useless until edited, so the editor is the point
+       * of creating it; a plan that arrives complete from an analysis is not.
+       */
+      openEditor?: boolean;
     }
   ): Promise<Artifact> => {
     const id = `t_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
@@ -772,7 +778,7 @@ export function App() {
     setGraph(r.catalog);
     setQuota(r.quota);
     setSelected([id]);
-    openTransformEditor(artifact);
+    if (opts?.openEditor !== false) openTransformEditor(artifact);
     return artifact;
   }, [openTransformEditor]);
 
@@ -1332,15 +1338,20 @@ export function App() {
    *   - *What* the repairs apply to. Never what the caller says: the source is
    *     resolved from the bound artifact's provenance, so a report can only
    *     ever propose fixes for the log it analysed.
-   *   - *Where* they land. One derived log per source collects them, found by
-   *     `meta.repairOf`, so five clicked fixes make one artifact with five
-   *     steps instead of five artifacts. The source is never modified.
+   *   - *Where* they land. One derived log per source *and group* collects
+   *     them, so five clicked repairs make one artifact with five steps
+   *     instead of five artifacts. The group is what stops that being wrong
+   *     for everything else: repairs for one log belong in one plan, but two
+   *     clusters of one log do not — anded together they would keep no case
+   *     at all — so a caller that names its own group gets its own log.
    *   - *In what order*. `insertOpOrdered` places each operation at its phase,
    *     because click order is not execution order — canonicalising before
    *     deduplicating is what makes duplicates visible, and the timestamp
    *     assertion has to come after every filter.
    */
-  const onDeriveLog = useCallback(async (boundArtifactId: string, proposed: unknown[]) => {
+  const onDeriveLog = useCallback(async (
+    boundArtifactId: string, proposed: unknown[], opts?: { group?: string; name?: string }
+  ) => {
     const graph = graphRef.current;
     const bound = graph.artifacts[boundArtifactId];
     if (!bound) throw new Error('This panel is not bound to an artifact.');
@@ -1364,26 +1375,43 @@ export function App() {
       throw new Error(`Rejected proposed repairs: ${e.message}`);
     }
 
-    const existing = Object.values(graph.artifacts).find(
-      (a) => a.storage.kind === 'view' && a.meta?.repairOf === source.id
-    );
+    // `repair` is the default so every existing caller, and every derived log
+    // already in a catalog, keeps behaving exactly as before.
+    const group = (opts?.group ?? 'repair').slice(0, 64);
+    const isRepair = group === 'repair';
+    const existing = Object.values(graph.artifacts).find((a) => a.storage.kind === 'view' && (
+      isRepair ? a.meta?.repairOf === source.id
+        : a.meta?.derivedFrom === source.id && a.meta?.derivedGroup === group
+    ));
 
     if (existing && existing.storage.kind === 'view') {
       let next = existing.storage.plan.ops;
       for (const op of ops) next = insertOpOrdered(next, op);
       await onPlanChange(existing, next);
-      openTransformEditor(existing);
+      if (isRepair) openTransformEditor(existing); else openArtifactImpl(existing);
+      setSelected([existing.id]);
       return { id: existing.id, name: existing.name, applied: ops.length };
     }
 
     let seeded: TransformOp[] = [];
     for (const op of ops) seeded = insertOpOrdered(seeded, op);
+    const suggested = (opts?.name ?? '').trim().slice(0, 80);
     const created = await createDerivedLog(source, seeded, {
-      name: `Repaired · ${source.name.replace(/\.[^.]+$/, '')}`,
-      meta: { repairOf: source.id },
+      name: suggested || `Repaired · ${source.name.replace(/\.[^.]+$/, '')}`,
+      meta: isRepair
+        ? { repairOf: source.id }
+        : { derivedFrom: source.id, derivedGroup: group },
+      openEditor: isRepair,
     });
+    // A repair is a *proposal* and wants reviewing, so it opens in the plan
+    // editor. Any other derivation is the result the caller asked for, so it
+    // opens as what it is: a log.
+    if (!isRepair) {
+      setSelected([created.id]);
+      openArtifactImpl(created);
+    }
     return { id: created.id, name: created.name, applied: ops.length };
-  }, [onPlanChange, createDerivedLog, openTransformEditor, LOG_TYPES]);
+  }, [onPlanChange, createDerivedLog, openTransformEditor, openArtifactImpl, LOG_TYPES]);
 
   /**
    * Opens every artifact in `toCompare`'s own default view in a fresh row of

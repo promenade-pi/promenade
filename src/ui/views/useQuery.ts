@@ -34,6 +34,18 @@ export function useQuery<T = any>(sql: string | null, deps: unknown[] = []) {
   return { rows, table, error, loading };
 }
 
-/** DuckDB returns BigInt for counts; views want numbers. */
-export const num = (v: unknown): number =>
-  typeof v === 'bigint' ? Number(v) : (v as number);
+/**
+ * DuckDB returns BigInt for counts; views want numbers.
+ *
+ * Also strings, which is the part that bites. A `SUM` widens to HUGEINT, and
+ * Arrow hands a HUGEINT over as a decimal *string* — which the old cast waved
+ * straight through, so `a + b` over two summed columns quietly became string
+ * concatenation instead of addition. Every caller here wants arithmetic, so
+ * the coercion belongs in the one place rather than in each query's CASTs.
+ */
+export const num = (v: unknown): number => {
+  if (typeof v === 'number') return v;
+  if (typeof v === 'bigint') return Number(v);
+  if (typeof v === 'string') return v === '' ? NaN : Number(v);
+  return v == null ? NaN : Number(v);
+};

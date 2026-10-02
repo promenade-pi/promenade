@@ -22,6 +22,7 @@ import {
   moveArtifactDir, listArtifactDirectories, readArtifactSidecar,
 } from '../host/data/opfs';
 import { reconstructArtifact } from '../host/artifact/recover';
+import { TIMESTAMP_SUFFIX } from '../host/artifact/table-rows';
 // `host/plugins/store.ts` is main-thread only: it transitively imports
 // `host/data/client.ts`, which spawns this very worker at module scope.
 // Plugin package assembly for export/import therefore happens on the main
@@ -1568,6 +1569,89 @@ const HANDLERS: Record<string, (a: any) => Promise<unknown>> = {
     }
 
     return mountAndSummarizeLog(id, targetType, files);
+  },
+
+  /**
+   * Writes a **table-shaped** artifact: one Parquet file per relation, with
+   * whatever columns the producer actually sent.
+   *
+   * The dataset counterpart of `materializeRowLog`, and deliberately not a
+   * branch of it. A log is materialised *against* a schema — every declared
+   * column is projected, a missing optional one is filled with typed nulls,
+   * and the result has the shape every reader already expects. A table has no
+   * such shape to restore: its schema belongs to the plugin, was already
+   * checked against what the plugin declared (`artifact/table-rows.ts`), and
+   * the columns that arrive here are the columns the artifact has. So this
+   * writes them and stops, rather than projecting them onto something.
+   *
+   * The one thing it does do is turn the microsecond integer columns back
+   * into real timestamps, by the same `<name>_us` convention and the same
+   * `make_timestamp` call `materializeRowLog` uses — a generated table and a
+   * generated log must not disagree about what a timestamp is.
+   */
+  async materializeTable({
+    id, targetType, relations,
+  }: {
+    id: string;
+    targetType: string;
+    relations: Record<string, Uint8Array>;
+  }) {
+    if (!duck) throw new Error('not booted');
+    if (Object.keys(relations).length === 0) {
+      throw new Error('materializeTable: at least one relation is required');
+    }
+
+    const files: Record<string, string> = {};
+    const summary: Record<string, { rows: number; columns: Array<{ name: string; type: string }> }> = {};
+
+    for (const [relation, ipc] of Object.entries(relations)) {
+      const table = arrow.tableFromIPC(ipc);
+      const tmpName = `${tableName(id, relation)}__tmp`;
+      const projected = `${tmpName}__cast`;
+      await duck.conn.insertArrowTable(table, { name: tmpName, create: true });
+      try {
+        // Quoted, both sides. A feature table's columns are named after the
+        // log's own activities — `act:W_Completeren aanvraag` — so a bare
+        // identifier here is not a style question: it is a syntax error on
+        // every real log, and a silently different column name on the rest.
+        const quoted = (name: string) => `"${name.replace(/"/g, '""')}"`;
+        const columns = table.schema.fields.map((f) =>
+          f.name.endsWith(TIMESTAMP_SUFFIX)
+            ? `CASE WHEN ${quoted(f.name)} IS NULL THEN NULL ELSE make_timestamp(${quoted(f.name)}) END AS ` +
+              `${quoted(f.name.slice(0, -TIMESTAMP_SUFFIX.length))}`
+            : quoted(f.name)
+        );
+        await duck.conn.query(
+          `CREATE OR REPLACE TABLE ${projected} AS SELECT ${columns.join(', ')} FROM ${tmpName}`
+        );
+        const described = await duck.conn.query(`SELECT * FROM ${projected} LIMIT 0`);
+        summary[relation] = {
+          rows: table.numRows,
+          columns: described.schema.fields.map((f) => ({ name: f.name, type: String(f.type) })),
+        };
+        const w = await tableToParquet(id, projected, relation);
+        files[relation] = w.file;
+      } finally {
+        await duck.conn.query(`DROP TABLE IF EXISTS ${projected}`);
+        await duck.conn.query(`DROP TABLE IF EXISTS ${tmpName}`);
+      }
+    }
+
+    const shell: Artifact = {
+      id, name: '', type: targetType, createdAt: new Date().toISOString(),
+      storage: { kind: 'parquet', files }, meta: {}, producedBy: null, inputs: [],
+    };
+    await mountArtifact(shell);
+
+    const first = Object.values(summary)[0];
+    return {
+      storage: shell.storage,
+      meta: {
+        relations: summary,
+        rows: first?.rows ?? 0,
+        columns: first?.columns.length ?? 0,
+      },
+    };
   },
 
   async remove({ id }: { id: string }) {

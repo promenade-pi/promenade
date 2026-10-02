@@ -48,7 +48,7 @@ function SortHeader({ children, active, descending, onClick }: {
   </button></th>;
 }
 
-function Pagination({ page, pageSize, total, onPage, onPageSize }: {
+export function Pagination({ page, pageSize, total, onPage, onPageSize }: {
   page: number; pageSize: number; total: number; onPage: (page: number) => void; onPageSize: (size: number) => void;
 }) {
   const pages = Math.max(1, Math.ceil(total / pageSize));
@@ -73,9 +73,16 @@ function Pagination({ page, pageSize, total, onPage, onPageSize }: {
 }
 
 export function TraceExplorer({ artifact, panelId, params, onParamChange }: {
-  artifact: Artifact; panelId: string; params?: { coverage?: number }; onParamChange?: (key: string, value: unknown) => void;
+  artifact: Artifact; panelId: string; params?: { coverage?: number; tab?: 'variants' | 'cases' }; onParamChange?: (key: string, value: unknown) => void;
 }) {
-  const [tab, setTab] = useState<'variants' | 'cases'>('variants');
+  // The tab is a view param, not just local state, so another view can open
+  // this one straight onto Cases (the Overview's "Cases" tile does). Every
+  // switch is pushed back as well: otherwise a second "Cases" click after the
+  // user had wandered back to Variants would set a param that never changed,
+  // and nothing would happen.
+  const [tab, setLocalTab] = useState<'variants' | 'cases'>(params?.tab ?? 'variants');
+  useEffect(() => { if (params?.tab) setLocalTab(params.tab); }, [params?.tab]);
+  const setTab = (next: 'variants' | 'cases') => { setLocalTab(next); onParamChange?.('tab', next); };
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [sel, setSel] = useState<Selection>(selectionBus.get());
   const [variantSort, setVariantSort] = useState<{ key: VariantSort; desc: boolean }>({ key: 'case_count', desc: true });
