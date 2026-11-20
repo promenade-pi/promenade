@@ -125,21 +125,28 @@ export async function ingestOcelRecords({ log, conn, prefix, sourceFormat, onPro
 
 /** Streaming XML reader for OCEL's four top-level collections. */
 export async function parseOcelXml(source: AsyncIterable<Uint8Array>, onProgress?: (a: number, b: number) => void, size = 0): Promise<OcelLog> {
-  const { XmlScanner, decodeEntities } = await import('./lib/xml-scan');
-  const log = emptyLog(); let section = ''; let current: any = null; let currentType: any = null; let attribute: any = null; let attrText = ''; let used = 0;
+  const { XmlScanner, decodeEntities } = await import('./lib/xml-scan.ts');
+  const log = emptyLog(); let section = ''; let current: any = null; let currentType: any = null; let attribute: any = null; let attrText = ''; let used = 0; let inRelationships = false;
   const scanner = new XmlScanner({
     onOpen(name: string, attrs: any) {
+      // Inside an event's or object's own `<objects>` list, an `<object>` is a
+      // relationship, not a new object: pm4py's exporter writes E2O/O2O links as
+      // `<object object-id=… qualifier=…/>` there instead of `<relationship>`.
+      // Treating it as a new object replaced `current` and silently dropped every
+      // event of such a log (Angular GitHub Commits imported as 5 events, 0 E2O).
+      if (name === 'objects' && current) { inRelationships = true; return; }
       if (['event-types', 'object-types', 'events', 'objects'].includes(name)) { section = name; return; }
       if (name === 'event-type' || name === 'object-type') { currentType = { name: attrs.name ?? '', attributes: [] }; return; }
+      if (inRelationships && (name === 'object' || name === 'relationship')) { current.relationships.push({ objectId: attrs['object-id'] ?? attrs.objectId ?? attrs.id ?? '', qualifier: attrs.qualifier ?? attrs.relationship ?? null }); return; }
       if (name === 'event') { current = { id: attrs.id ?? '', type: attrs.type ?? '', time: attrs.time ?? null, attributes: [], relationships: [] }; return; }
       if (name === 'object') { current = { id: attrs.id ?? '', type: attrs.type ?? '', attributes: [], relationships: [] }; return; }
       if (name === 'attribute') { attribute = { name: attrs.name ?? '', type: attrs.type, time: attrs.time ?? null }; attrText = ''; return; }
-      if (name === 'relationship' && current) current.relationships.push({ objectId: attrs['object-id'] ?? attrs.objectId ?? '', qualifier: attrs.qualifier ?? attrs.relationship ?? null });
     },
     onText(value: string) { if (attribute) attrText += value; },
     onClose(name: string) {
       if (name === 'attribute' && attribute) { if (currentType) currentType.attributes.push({ name: attribute.name, type: attrType(attribute.type) }); else if (current) current.attributes.push({ name: attribute.name, time: attribute.time, value: decodeEntities(attrText).trim() }); attribute = null; return; }
       if ((name === 'event-type' || name === 'object-type') && currentType) { (name === 'event-type' ? log.eventTypes : log.objectTypes).push(currentType); currentType = null; return; }
+      if (inRelationships) { if (name === 'objects') inRelationships = false; return; }
       if (name === 'event' && current) { log.events.push(current); current = null; return; }
       if (name === 'object' && current) { log.objects.push(current); current = null; return; }
       if (name === section) section = '';
@@ -172,11 +179,13 @@ export function parseOcelCsv(content: string): OcelLog {
   log.objects = [...objects.values()]; log.objectTypes = declaration(ots); log.eventTypes = declaration(ets); return log;
 }
 
-/** Event-table CSV as imported by ProM's CSV/XES workflow and Power Automate. */
+/** Event-table CSV as imported by ProM's CSV/XES workflow and Power Automate. A case-centric
+ *  `Case ID` (or `case:concept:name`) column is the case each event belongs to, not the event's
+ *  id — it becomes a `Case` object type beside any other object columns, e.g. `Resource`. */
 export function parsePromCsv(content: string): OcelLog {
-  const records = parseCsv(content); const headers = records[0] ?? []; const lower = new Map(headers.map((h) => [h.toLowerCase(), h])); const idKey = lower.get('event') ?? lower.get('id') ?? lower.get('case id'); const activityKey = lower.get('activity') ?? lower.get('concept:name'); const timeKey = lower.get('timestamp') ?? lower.get('time:timestamp');
+  const records = parseCsv(content); const headers = records[0] ?? []; const lower = new Map(headers.map((h) => [h.toLowerCase(), h])); const idKey = lower.get('event') ?? lower.get('id'); const caseKey = lower.get('case id') ?? lower.get('case:concept:name'); const activityKey = lower.get('activity') ?? lower.get('concept:name'); const timeKey = lower.get('timestamp') ?? lower.get('time:timestamp');
   if (!activityKey || !timeKey) throw new Error('CSV needs Activity and Timestamp columns (or concept:name and time:timestamp).');
-  const system = new Set([idKey, activityKey, timeKey, lower.get('actor')].filter(Boolean)); const objectColumns = headers.filter((h) => /^ot:/.test(h) || /^[A-Z][A-Za-z0-9 _.-]*$/.test(h) && !system.has(h)); const objectNames = new Map(objectColumns.map((h) => [h, h.startsWith('ot:') ? h.slice(3) : h])); const eventAttributes = headers.filter((h) => !system.has(h) && !objectNames.has(h) && ![...objectNames.keys()].some((t) => h.startsWith(`${t}-`)));
+  const system = new Set([idKey, caseKey, activityKey, timeKey, lower.get('actor')].filter(Boolean)); const candidates = [...(caseKey ? [caseKey] : []), ...headers.filter((h) => /^ot:/.test(h) || /^[A-Z][A-Za-z0-9 _.-]*$/.test(h) && !system.has(h))]; const objectColumns = candidates.filter((h) => !candidates.some((t) => t !== h && h.startsWith(`${t}-`))); const objectNames = new Map(objectColumns.map((h) => [h, h === caseKey ? 'Case' : h.startsWith('ot:') ? h.slice(3) : h])); const eventAttributes = headers.filter((h) => !system.has(h) && !objectNames.has(h) && ![...objectNames.keys()].some((t) => h.startsWith(`${t}-`)));
   const log = emptyLog(), objects = new Map<string, OcelLog['objects'][number]>(), ots = new Map<string, Map<string, string>>(), ets = new Map<string, Map<string, string>>();
   recordsToRows(records).forEach((row, i) => { const activity = row[activityKey].trim(), time = row[timeKey].trim(); if (!activity) return; const id = idKey ? row[idKey].trim() || `event-${i + 1}` : `event-${i + 1}`; const relationships: any[] = [];
     for (const [header, type] of objectNames) for (const objectId of (row[header] ?? '').split('|').map((v) => v.trim()).filter(Boolean)) { let object = objects.get(objectId); if (!object) { object = { id: objectId, type, attributes: [], relationships: [] }; objects.set(objectId, object); } else if (object.type !== type) throw new Error(`object "${objectId}" appears as both ${object.type} and ${type}`); relationships.push({ objectId, qualifier: null }); ensureType(ots, type); for (const attrHeader of headers.filter((h) => h.startsWith(`${header}-`))) { const values = (row[attrHeader] ?? '').split(';'); const at = attrHeader.slice(header.length + 1), value = values[(row[header] ?? '').split('|').map((v) => v.trim()).indexOf(objectId)]; if (value) { object.attributes.push({ name: at, time, value }); ensureType(ots, type).set(at, infer(value)); } } }
